@@ -7,6 +7,12 @@ use Inertia\Inertia;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\HomeController;
 
+use App\Http\Controllers\Auth\SocialiteController;
+
+// Auth Google - Facebook
+Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'redirect'])->name('socialite.redirect');
+Route::get('/auth/{provider}/callback', [SocialiteController::class, 'callback'])->name('socialite.callback');
+
 // 1. Landing Page
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
