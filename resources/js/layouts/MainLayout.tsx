@@ -42,7 +42,7 @@ export default function MainLayout({ children }: PropsWithChildren) {
 
                     {/* Menu Tengah */}
                     <div className="hidden items-center gap-6 md:flex">
-                        {['Home', 'Movies', 'Upcoming'].map((item) => (
+                        {['Home', 'Movies', 'History'].map((item) => (
                             <Link
                                 key={item}
                                 href={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
