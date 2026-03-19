@@ -156,3 +156,13 @@
         @apply bg-background text-foreground;
     }
 }
+
+@layer utilities {
+  .neon-text-magenta {
+    text-shadow: 0 0 5px #f0abfc, 0 0 10px #e879f9;
+  }
+  .neon-border-cyan {
+    box-shadow: 0 0 5px #22d3ee, 0 0 10px #06b6d4;
+  }
+}
+@tailwind utilities;

@@ -40,6 +40,7 @@ class MovieForm
                 FileUpload::make('poster')
                     ->image()
                     ->directory('movie-posters')
+                    ->disk('public')
                     ->columnSpanFull(),
 
                 Select::make('categories')
