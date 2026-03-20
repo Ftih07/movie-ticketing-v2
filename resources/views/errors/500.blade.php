@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('title', 'Server Error')
+@section('code', '500')
+@section('message', 'Proyektor Bermasalah')
+@section('description', 'Terjadi kesalahan teknis di balik layar. Kami sedang berusaha memperbaiki gulungan filmnya.')

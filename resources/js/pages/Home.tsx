@@ -1,91 +1,217 @@
 import MainLayout from '@/layouts/MainLayout';
 import { Movie } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface Props {
-    heroMovie: Movie;
-    actionMovies: Movie[];
-    dramaMovies: Movie[];
+    nowShowing: Movie[];
+    comingSoon: Movie[];
+    allGenres: { id: number; name: string }[];
+    filters: {
+        search?: string;
+        genre?: string;
+        duration?: string;
+        date?: string;
+    };
 }
 
-export default function Home({ heroMovie, actionMovies, dramaMovies }: Props) {
+export default function Home({ nowShowing, comingSoon, allGenres, filters: initialFilters }: Props) {
+    const [filters, setFilters] = useState({
+        search: initialFilters?.search || '',
+        genre: initialFilters?.genre || '',
+        duration: initialFilters?.duration || '',
+        date: initialFilters?.date || '',
+    });
+
+    const handleSearch = () => {
+        router.get(route('home'), filters, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const handleReset = () => {
+        setFilters({ search: '', genre: '', duration: '', date: '' });
+        router.get(
+            route('home'),
+            {},
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    // Cek kalau hasil filter benar-benar kosong di kedua section
+    const isDataEmpty = nowShowing.length === 0 && comingSoon.length === 0;
+
     return (
         <MainLayout>
-            <Head title="Home | Watch Now" />
+            <Head title="Home | Unlimited Movies" />
 
-            {/* Hero Section */}
-            {heroMovie && (
-                <section className="relative -mx-4 mb-12 aspect-[21/9] overflow-hidden bg-slate-900 lg:-mx-8">
-                    {/* Poster Background */}
-                    <img
-                        src={`/storage/${heroMovie.poster}`}
-                        alt={heroMovie.title}
-                        className="absolute inset-0 h-full w-full object-cover opacity-30"
-                    />
-                    {/* Gradient Overlay ala Netflix */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent"></div>
+            {/* Generic CTA Hero Section */}
+            <section className="relative flex w-full items-center justify-center overflow-hidden bg-gray-50 py-20 md:py-32 lg:h-[70vh] dark:bg-black">
+                {/* Background Image */}
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=2025&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat opacity-40 dark:opacity-50"></div>
 
-                    {/* Konten Hero */}
-                    <div className="relative z-10 flex h-full max-w-3xl flex-col justify-end p-8 lg:p-12">
-                        <div className="mb-4 inline-flex gap-2">
-                            {heroMovie.categories?.map((cat) => (
-                                <span key={cat.id} className="rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300">
-                                    {cat.name}
-                                </span>
-                            ))}
-                        </div>
-                        <h1 className="mb-4 text-5xl font-extrabold tracking-tight text-white lg:text-6xl">{heroMovie.title}</h1>
-                        <p className="mb-8 line-clamp-3 text-lg text-slate-300">{heroMovie.description}</p>
-                        <div className="flex gap-4">
-                            <Link
-                                href={route('movies.show', heroMovie.slug)}
-                                className="bg-magenta neon-border-magenta rounded-full px-8 py-3 text-sm font-semibold text-white transition-all hover:scale-105 hover:bg-fuchsia-600"
-                            >
-                                Book Tickets Now
-                            </Link>
-                            <button className="rounded-full border border-white/20 bg-white/5 px-8 py-3 text-sm font-semibold text-white backdrop-blur-md transition-all hover:bg-white/10">
-                                Watch Trailer
-                            </button>
-                        </div>
+                {/* Overlay Gradients */}
+                <div className="absolute inset-0 bg-gradient-to-b from-gray-50/80 via-gray-50/60 to-gray-50 dark:from-black/80 dark:via-black/60 dark:to-zinc-950"></div>
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent dark:from-zinc-950 dark:via-zinc-950/80"></div>
+
+                {/* Konten Text Slogan */}
+                <div className="relative z-10 flex flex-col items-center px-4 text-center">
+                    <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-gray-900 drop-shadow-sm sm:text-5xl md:text-6xl lg:text-7xl dark:text-white">
+                        The big screen awaits.
+                        <br className="hidden sm:block" />
+                        <span className="text-red-600 drop-shadow-md"> Book your seat today.</span>
+                    </h1>
+                    <p className="mb-8 max-w-2xl text-base text-gray-800 drop-shadow sm:text-lg md:text-xl dark:text-gray-300">
+                        Experience movies the way they’re meant to be seen — in theaters, with the best seats reserved for you.
+                    </p>
+                </div>
+            </section>
+
+            <div className="mx-auto max-w-7xl px-4 lg:px-8">
+                {/* 🔍 FILTER BAR */}
+                <div className="relative z-20 -mt-6 mb-12 flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-xl md:-mt-10 md:flex-row md:items-end dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="flex-1">
+                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-zinc-400">Search</label>
+                        <input
+                            type="text"
+                            value={filters.search}
+                            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                            placeholder="Find movies..."
+                            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm focus:border-red-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
+                        />
                     </div>
-                </section>
-            )}
 
-            {/* Movie Carousels */}
-            <MovieCarousel title="Action Packed" movies={actionMovies} />
-            <MovieCarousel title="Drama Series" movies={dramaMovies} />
+                    <div className="w-full md:w-48">
+                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-zinc-400">Genre</label>
+                        <select
+                            value={filters.genre}
+                            onChange={(e) => setFilters({ ...filters, genre: e.target.value })}
+                            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm focus:border-red-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"
+                        >
+                            <option value="">All Genres</option>
+                            {allGenres.map((genre) => (
+                                <option key={genre.id} value={genre.id}>
+                                    {genre.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="w-full md:w-48">
+                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-zinc-400">Duration</label>
+                        <select
+                            value={filters.duration}
+                            onChange={(e) => setFilters({ ...filters, duration: e.target.value })}
+                            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm focus:border-red-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"
+                        >
+                            <option value="">Any Duration</option>
+                            <option value="90">&lt; 1.5 Hours</option>
+                            <option value="120">&lt; 2 Hours</option>
+                            <option value="150">&lt; 2.5 Hours</option>
+                            <option value="180">&lt; 3 Hours</option>
+                        </select>
+                    </div>
+
+                    <div className="w-full md:w-48">
+                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-zinc-400">Date</label>
+                        <select
+                            value={filters.date}
+                            onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+                            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm focus:border-red-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"
+                        >
+                            <option value="">Any Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                        </select>
+                    </div>
+
+                    <button
+                        onClick={handleSearch}
+                        className="h-[42px] w-full rounded-lg bg-red-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-red-700 md:w-auto"
+                    >
+                        Search
+                    </button>
+                </div>
+
+                {/* 🎬 MOVIE CAROUSEL ATAU EMPTY STATE */}
+                {!isDataEmpty ? (
+                    <>
+                        {nowShowing.length > 0 && <MovieCarousel title="Now Showing" movies={nowShowing} />}
+                        {comingSoon.length > 0 && <MovieCarousel title="Coming Soon" movies={comingSoon} />}
+                    </>
+                ) : (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 py-24 dark:border-zinc-800 dark:bg-zinc-900/50">
+                        <span className="mb-4 text-5xl">🧐</span>
+                        <p className="text-lg font-medium text-gray-600 dark:text-zinc-400">Waduh, film yang kamu cari nggak ketemu.</p>
+                        <button
+                            onClick={handleReset}
+                            className="mt-4 rounded-lg bg-gray-200 px-6 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                        >
+                            Reset Filter
+                        </button>
+                    </div>
+                )}
+            </div>
         </MainLayout>
     );
 }
 
-// Sub-komponen buat Carousel biar rapi
+// Sub-komponen Carousel
 interface CarouselProps {
     title: string;
     movies: Movie[];
 }
 function MovieCarousel({ title, movies }: CarouselProps) {
     return (
-        <section className="mb-12">
-            <h2 className="mb-6 text-2xl font-bold tracking-tight text-white">
-                <span className="neon-text-cyan text-cyan-400">|</span> {title}
-            </h2>
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                {movies.map((movie) => (
-                    <Link key={movie.id} href={route('movies.show', movie.slug)} className="group">
-                        <div className="neon-border-cyan relative aspect-[3/4] overflow-hidden rounded-xl bg-slate-800 ring-1 ring-slate-700 transition-all group-hover:-translate-y-2 group-hover:ring-2 group-hover:ring-cyan-500">
+        <section className="mb-14">
+            <div className="mb-6 flex items-center gap-3">
+                <div className="h-6 w-1.5 rounded-full bg-red-600"></div>
+                <h2 className="text-xl font-bold tracking-tight text-gray-900 md:text-2xl dark:text-white">{title}</h2>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-6 lg:grid-cols-5 xl:grid-cols-6">
+                {movies?.map((movie) => (
+                    <Link key={movie.id} href={route('movies.show', movie.slug)} className="group relative block">
+                        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-hover:z-10 group-hover:scale-105 group-hover:shadow-xl dark:bg-zinc-800">
                             <img
                                 src={`/storage/${movie.poster}`}
                                 alt={movie.title}
-                                className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-80"
+                                className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
                             />
-                            {/* Overlay info durasi pas di-hover */}
-                            <div className="absolute inset-x-0 bottom-0 translate-y-4 bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                                <p className="text-xs font-medium text-cyan-300">{movie.duration} Menit</p>
+
+                            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                <h3 className="line-clamp-1 text-sm font-bold text-white">{movie.title}</h3>
+                                <p className="mt-1 text-xs font-medium text-gray-300">{movie.duration} Minutes</p>
+                                <button className="mt-3 w-full rounded bg-white py-1.5 text-xs font-bold text-black transition-colors hover:bg-gray-200">
+                                    Book Now
+                                </button>
                             </div>
                         </div>
-                        <h3 className="mt-3 line-clamp-1 text-sm font-semibold text-slate-100 group-hover:text-white">{movie.title}</h3>
                     </Link>
                 ))}
+            </div>
+
+            {/* Ganti bagian Pagination Links dengan ini di MovieCarousel */}
+            <div className="mt-10 flex justify-center">
+                <Link
+                    href={route('movies.index')} // Arahkan ke halaman All Movies kamu
+                    className="group flex items-center gap-2 rounded-full border border-red-200 px-6 py-2.5 text-sm font-bold transition-all hover:border-red-600 hover:text-red-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-red-500"
+                >
+                    VIEW ALL MOVIES
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </Link>
             </div>
         </section>
     );

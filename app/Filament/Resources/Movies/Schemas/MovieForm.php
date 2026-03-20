@@ -43,6 +43,12 @@ class MovieForm
                     ->disk('public')
                     ->columnSpanFull(),
 
+                TextInput::make('trailer_url')
+                    ->label('YouTube Trailer URL')
+                    ->url()
+                    ->placeholder('https://www.youtube.com/watch?v=...')
+                    ->columnSpanFull(),
+
                 Select::make('categories')
                     ->multiple()
                     ->relationship('categories', 'name')

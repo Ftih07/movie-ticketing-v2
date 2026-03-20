@@ -8,15 +8,25 @@ use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Carbon\Carbon; // Pastikan import Carbon
 
 class BookingController extends Controller
 {
     // 1. Nampilin UI Milih Kursi
     public function show(Showtime $showtime)
     {
+        // --- VALIDASI WAKTU TAYANG ---
+        // Gabungkan tanggal dan jam selesai film
+        $endTime = Carbon::parse($showtime->show_date . ' ' . $showtime->end_time);
+
+        // Kalau sekarang sudah melewati end_time, tendang balik ke page movies
+        if (now()->greaterThan($endTime)) {
+            return redirect()->route('movies.index')
+                ->with('error', 'Maaf, jadwal tayang film ini sudah berakhir.');
+        }
+
         $showtime->load(['movie', 'studio']);
 
-        // Ambil kursi yang udah dibayar atau lagi proses pending
         $bookedSeats = Ticket::whereHas('booking', function ($query) use ($showtime) {
             $query->where('showtime_id', $showtime->id)
                 ->whereIn('status', ['paid', 'pending']);
@@ -29,16 +39,24 @@ class BookingController extends Controller
         ]);
     }
 
-    // 2. Proses Checkout & Minta Snap Token Midtrans
+    // 2. Proses Checkout
     public function checkout(Request $request, Showtime $showtime)
     {
+        // --- VALIDASI DOUBLE CHECK (Cegah user nembak API langsung) ---
+        $endTime = Carbon::parse($showtime->show_date . ' ' . $showtime->end_time);
+
+        if (now()->greaterThan($endTime)) {
+            return response()->json([
+                'message' => 'Jadwal tayang sudah berakhir. Transaksi tidak dapat dilanjutkan.'
+            ], 422); // Error 422: Unprocessable Entity
+        }
+
         $request->validate(['seats' => 'required|array']);
 
         $user = auth()->user();
         $totalAmount = count($request->seats) * $showtime->price;
         $bookingCode = 'MVX-' . date('Ymd') . '-' . strtoupper(Str::random(5));
 
-        // Buat data Booking (Invoice)
         $booking = Booking::create([
             'user_id' => $user->id,
             'showtime_id' => $showtime->id,
@@ -47,7 +65,6 @@ class BookingController extends Controller
             'status' => 'pending',
         ]);
 
-        // Buat data Tiket per kursi
         foreach ($request->seats as $seat) {
             Ticket::create([
                 'booking_id' => $booking->id,
@@ -73,11 +90,9 @@ class BookingController extends Controller
             ],
         ];
 
-        // Dapatkan Token dari Midtrans
         $snapToken = \Midtrans\Snap::getSnapToken($params);
         $booking->update(['snap_token' => $snapToken]);
 
-        // Kembalikan token ke React biar bisa buka pop-up
         return response()->json(['snap_token' => $snapToken]);
     }
 }

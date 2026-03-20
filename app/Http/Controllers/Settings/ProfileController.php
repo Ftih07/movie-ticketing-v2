@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -29,8 +30,23 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
+        // 1. Simpan data text (name, email)
         $request->user()->fill($request->validated());
 
+        // 2. Logic handle upload avatar
+        if ($request->hasFile('profile_image')) {
+            // Hapus foto lama JIKA ada DAN JIKA BUKAN link dari google/facebook
+            $oldImage = $request->user()->profile_image;
+            if ($oldImage && !str_starts_with($oldImage, 'http')) {
+                Storage::disk('public')->delete($oldImage);
+            }
+
+            // Simpan gambar baru ke folder storage/app/public/avatars
+            $path = $request->file('profile_image')->store('avatars', 'public');
+            $request->user()->profile_image = $path;
+        }
+
+        // 3. Reset verifikasi kalau email diganti
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
         }

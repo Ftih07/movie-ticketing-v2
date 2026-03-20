@@ -12,10 +12,8 @@ class MovieController extends Controller
     // Halaman ALL FILM + FILTER TANGGAL
     public function index(Request $request): Response
     {
-        // Mulai query
         $query = Movie::query()->with('categories');
 
-        // Logic Filter by Tanggal: Ambil film yang PUNYA jadwal tayang di tanggal tersebut
         if ($request->has('date') && $request->date != '') {
             $filterDate = $request->date;
             $query->whereHas('showtimes', function ($q) use ($filterDate) {
@@ -23,13 +21,10 @@ class MovieController extends Controller
             });
         }
 
-        // Ambil datanya
-        $movies = $query->latest()->get();
+        $movies = $query->latest()->paginate(12)->withQueryString();
 
-        // Kirim data ke React (Pages/Movies/Index.tsx)
         return Inertia::render('Movies/Index', [
-            'movies' => $movies,
-            // Kirim tanggal yang sedang difilter balik ke frontend buat isi value input date
+            'movies' => $movies, 
             'selectedDate' => $request->date,
         ]);
     }

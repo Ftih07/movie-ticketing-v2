@@ -8,24 +8,24 @@ interface Props {
     midtransClientKey: string;
 }
 
-// Helper badge status
+// Helper badge status - Disesuaikan dengan tema elegan Light/Dark
 const StatusBadge = ({ status }: { status: string }) => {
     switch (status) {
         case 'paid':
             return (
-                <span className="rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-xs font-bold tracking-wider text-green-400 uppercase">
+                <span className="rounded bg-green-100 px-2.5 py-1 text-xs font-bold tracking-wider text-green-700 uppercase dark:bg-green-900/30 dark:text-green-400">
                     Berhasil
                 </span>
             );
         case 'pending':
             return (
-                <span className="rounded-full border border-yellow-500/20 bg-yellow-500/10 px-3 py-1 text-xs font-bold tracking-wider text-yellow-400 uppercase">
+                <span className="rounded bg-yellow-100 px-2.5 py-1 text-xs font-bold tracking-wider text-yellow-700 uppercase dark:bg-yellow-900/30 dark:text-yellow-400">
                     Menunggu Pembayaran
                 </span>
             );
         default:
             return (
-                <span className="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-bold tracking-wider text-red-400 uppercase">
+                <span className="rounded bg-red-100 px-2.5 py-1 text-xs font-bold tracking-wider text-red-700 uppercase dark:bg-red-900/30 dark:text-red-400">
                     Gagal / Expired
                 </span>
             );
@@ -70,7 +70,7 @@ export default function History({ bookings, midtransClientKey }: Props) {
         });
     };
 
-    // 3. Fungsi Download QR yang di-UPGRADE jadi E-Ticket
+    // 3. Fungsi Download QR yang di-UPGRADE jadi E-Ticket (Warna disesuaikan ke Tema Netflix)
     const downloadQR = (booking: any) => {
         const svg = document.getElementById(`qr-${booking.booking_code}`);
         if (!svg) return;
@@ -81,7 +81,6 @@ export default function History({ bookings, midtransClientKey }: Props) {
         const img = new Image();
 
         img.onload = () => {
-            // Lebarin ukuran canvas biar muat teks (Mirip ukuran tiket)
             canvas.width = 400;
             canvas.height = 550;
 
@@ -90,24 +89,24 @@ export default function History({ bookings, midtransClientKey }: Props) {
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // Header Gelap (Biar cakep kek tema MovieFlix)
-                ctx.fillStyle = '#0f172a'; // warna slate-900
+                // Header Gelap (Hitam Elegan)
+                ctx.fillStyle = '#09090b'; // zinc-950
                 ctx.fillRect(0, 0, canvas.width, 70);
 
-                // Teks Header
-                ctx.fillStyle = '#22d3ee'; // warna cyan-400
-                ctx.font = 'bold 24px sans-serif';
+                // Teks Header (Merah)
+                ctx.fillStyle = '#dc2626'; // red-600
+                ctx.font = '900 24px sans-serif'; // Lebih tebal
                 ctx.textAlign = 'center';
-                ctx.fillText('MovieFlix E-Ticket', canvas.width / 2, 42);
+                ctx.fillText('MOVIEFLIX TICKET', canvas.width / 2, 42);
 
                 // Teks Judul Film
-                ctx.fillStyle = '#0f172a';
+                ctx.fillStyle = '#09090b';
                 ctx.font = 'bold 22px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText(booking.showtime.movie.title, canvas.width / 2, 110);
 
                 // Kode Order di atas QR
-                ctx.fillStyle = '#64748b'; // slate-500
+                ctx.fillStyle = '#71717a'; // zinc-500
                 ctx.font = '14px monospace';
                 ctx.fillText(`ORDER ID: ${booking.booking_code}`, canvas.width / 2, 135);
 
@@ -119,36 +118,36 @@ export default function History({ bookings, midtransClientKey }: Props) {
 
                 // Info Studio & Jadwal di Bawah QR
                 ctx.textAlign = 'left';
-                const col1 = 50; // Margin kiri kolom 1
-                const col2 = 220; // Margin kiri kolom 2
-                let startY = 410; // Posisi Y buat baris pertama info
+                const col1 = 50;
+                const col2 = 220;
+                let startY = 410;
 
                 // Baris 1: Tanggal & Waktu
-                ctx.fillStyle = '#94a3b8';
+                ctx.fillStyle = '#a1a1aa'; // zinc-400
                 ctx.font = '12px sans-serif';
                 ctx.fillText('Tanggal', col1, startY);
                 ctx.fillText('Waktu', col2, startY);
 
-                ctx.fillStyle = '#0f172a';
+                ctx.fillStyle = '#18181b'; // zinc-900
                 ctx.font = 'bold 16px sans-serif';
                 ctx.fillText(booking.showtime.show_date, col1, startY + 20);
                 ctx.fillText(booking.showtime.start_time.substring(0, 5) + ' WIB', col2, startY + 20);
 
-                startY += 60; // Turun ke baris 2
+                startY += 60;
 
                 // Baris 2: Studio & Kursi
-                ctx.fillStyle = '#94a3b8';
+                ctx.fillStyle = '#a1a1aa';
                 ctx.font = '12px sans-serif';
                 ctx.fillText('Studio', col1, startY);
                 ctx.fillText('Kursi', col2, startY);
 
-                ctx.fillStyle = '#0f172a';
+                ctx.fillStyle = '#18181b';
                 ctx.font = 'bold 16px sans-serif';
                 ctx.fillText(booking.showtime.studio.name, col1, startY + 20);
 
-                // Warna magenta buat kursi biar standout
-                ctx.fillStyle = '#d946ef';
-                ctx.font = 'bold 16px sans-serif';
+                // Warna Merah buat kursi biar standout
+                ctx.fillStyle = '#dc2626'; // red-600
+                ctx.font = '900 16px sans-serif';
                 const seats = booking.tickets.map((t: any) => t.seat_code).join(', ');
                 ctx.fillText(seats, col2, startY + 20);
 
@@ -168,21 +167,21 @@ export default function History({ bookings, midtransClientKey }: Props) {
         <MainLayout>
             <Head title="My Tickets | MovieFlix" />
 
-            <div className="mx-auto max-w-4xl py-8">
-                <h1 className="mb-2 text-4xl font-extrabold text-white">
-                    My <span className="text-magenta neon-text-magenta">Tickets</span>
-                </h1>
-                <p className="mb-10 text-slate-400">Riwayat pemesanan kursi dan tiket bioskop kamu.</p>
+            <div className="mx-auto max-w-4xl px-4 py-8 lg:px-0">
+                <div className="mb-10">
+                    <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 md:text-4xl dark:text-white">My Tickets</h1>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400">Riwayat pemesanan kursi dan tiket bioskop kamu.</p>
+                </div>
 
                 {bookings.length > 0 ? (
                     <div className="space-y-6">
                         {bookings.map((booking) => (
                             <div
                                 key={booking.id}
-                                className="flex flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl ring-1 ring-white/5 transition-all hover:border-cyan-500/50 md:flex-row"
+                                className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-red-500 hover:shadow-md md:flex-row dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-red-500"
                             >
                                 {/* Kiri: Poster Film */}
-                                <div className="relative bg-slate-800 md:w-48">
+                                <div className="relative h-48 bg-gray-200 md:h-auto md:w-48 dark:bg-zinc-800">
                                     <img
                                         src={
                                             booking.showtime.movie.poster
@@ -190,30 +189,32 @@ export default function History({ bookings, midtransClientKey }: Props) {
                                                 : 'https://placehold.co/400x600/1e293b/white?text=No+Poster'
                                         }
                                         alt={booking.showtime.movie.title}
-                                        className="h-full w-full object-cover opacity-80"
+                                        className="h-full w-full object-cover"
                                     />
                                 </div>
 
                                 {/* Tengah: Detail Tiket */}
                                 <div className="flex flex-1 flex-col justify-between p-6 sm:p-8">
                                     <div>
-                                        <div className="mb-4 flex items-start justify-between">
+                                        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row">
                                             <div>
-                                                <p className="mb-1 font-mono text-xs text-slate-500">ORDER: {booking.booking_code}</p>
-                                                <h2 className="text-2xl font-bold text-white">{booking.showtime.movie.title}</h2>
+                                                <p className="mb-1 font-mono text-xs font-semibold text-gray-500 dark:text-zinc-400">
+                                                    ORDER: {booking.booking_code}
+                                                </p>
+                                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{booking.showtime.movie.title}</h2>
                                             </div>
-                                            <div className="flex flex-col items-end gap-2">
+                                            <div className="flex flex-col items-start gap-2 sm:items-end">
                                                 <StatusBadge status={booking.status} />
 
                                                 {/* Cek kalau lunas, apakah tiketnya udah dipake semua? */}
                                                 {booking.status === 'paid' &&
                                                     booking.tickets?.length > 0 &&
                                                     (booking.tickets.every((t: any) => t.status === 'used') ? (
-                                                        <span className="rounded-full border border-slate-500/20 bg-slate-500/10 px-3 py-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                                                        <span className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[10px] font-bold tracking-wider text-gray-500 uppercase dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
                                                             Sudah Dipakai
                                                         </span>
                                                     ) : (
-                                                        <span className="neon-border-cyan rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold tracking-wider text-cyan-400 uppercase">
+                                                        <span className="rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-bold tracking-wider text-red-600 uppercase dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400">
                                                             Bisa Digunakan
                                                         </span>
                                                     ))}
@@ -222,35 +223,39 @@ export default function History({ bookings, midtransClientKey }: Props) {
 
                                         <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
                                             <div>
-                                                <p className="text-xs text-slate-500">Tanggal</p>
-                                                <p className="text-sm font-semibold text-slate-300">{booking.showtime.show_date}</p>
+                                                <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Tanggal</p>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-zinc-200">{booking.showtime.show_date}</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-slate-500">Waktu</p>
-                                                <p className="text-sm font-semibold text-cyan-400">{booking.showtime.start_time.substring(0, 5)}</p>
+                                                <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Waktu</p>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-zinc-200">
+                                                    {booking.showtime.start_time.substring(0, 5)}
+                                                </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-slate-500">Studio</p>
-                                                <p className="text-sm font-semibold text-slate-300">{booking.showtime.studio.name}</p>
+                                                <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Studio</p>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-zinc-200">{booking.showtime.studio.name}</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-slate-500">Kursi</p>
-                                                <p className="text-magenta neon-text-magenta text-sm font-semibold">
+                                                <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Kursi</p>
+                                                <p className="text-sm font-black text-red-600">
                                                     {booking.tickets.map((t: any) => t.seat_code).join(', ')}
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between border-t border-slate-800/50 pt-6">
+                                    <div className="flex items-center justify-between border-t border-gray-100 pt-6 dark:border-zinc-800">
                                         <div>
-                                            <p className="text-xs text-slate-500">Total Pembayaran</p>
-                                            <p className="text-xl font-bold text-white">Rp {booking.total_amount.toLocaleString('id-ID')}</p>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Total Pembayaran</p>
+                                            <p className="text-xl font-bold text-gray-900 dark:text-white">
+                                                Rp {booking.total_amount.toLocaleString('id-ID')}
+                                            </p>
                                         </div>
                                         {booking.status === 'pending' && (
                                             <button
                                                 onClick={() => handleLanjutBayar(booking.snap_token)}
-                                                className="rounded-xl bg-slate-700 px-5 py-2 text-sm font-bold text-white transition-all hover:bg-slate-600"
+                                                className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-700"
                                             >
                                                 Lanjut Bayar
                                             </button>
@@ -260,16 +265,15 @@ export default function History({ bookings, midtransClientKey }: Props) {
 
                                 {/* Kanan: TAMPILIN QR CODE DISINI KALAU LUNAS */}
                                 {booking.status === 'paid' && (
-                                    <div className="flex flex-col items-center justify-center border-t border-dashed border-slate-800 bg-slate-950 p-6 md:w-48 md:border-t-0 md:border-l">
-                                        <div className="rounded-xl bg-white p-2">
+                                    <div className="flex flex-col items-center justify-center border-t border-dashed border-gray-200 bg-gray-50 p-6 md:w-48 md:border-t-0 md:border-l dark:border-zinc-800 dark:bg-zinc-950">
+                                        <div className="rounded-lg bg-white p-2 shadow-sm">
                                             <QRCode id={`qr-${booking.booking_code}`} value={booking.booking_code} size={100} />
                                         </div>
-                                        <p className="mt-3 text-center text-xs text-slate-500">Scan at Entrance</p>
+                                        <p className="mt-3 text-center text-xs font-medium text-gray-500 dark:text-zinc-400">Scan at Entrance</p>
 
-                                        {/* PENTING: Sekarang kita passing seluruh object 'booking', bukan cuma kode doang */}
                                         <button
                                             onClick={() => downloadQR(booking)}
-                                            className="mt-3 flex items-center gap-1 rounded-lg bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-400 transition hover:bg-cyan-500/20"
+                                            className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                                         >
                                             <svg
                                                 xmlns="http://www.w3.org/2000/svg"
@@ -285,7 +289,7 @@ export default function History({ bookings, midtransClientKey }: Props) {
                                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                                                 />
                                             </svg>
-                                            Download Tiket
+                                            Unduh Tiket
                                         </button>
                                     </div>
                                 )}
@@ -293,9 +297,13 @@ export default function History({ bookings, midtransClientKey }: Props) {
                         ))}
                     </div>
                 ) : (
-                    <div className="rounded-2xl border border-slate-800 bg-slate-900 py-20 text-center">
-                        <p className="text-lg text-slate-500">Kamu belum punya riwayat pemesanan tiket.</p>
-                        <Link href="/" className="mt-4 inline-block text-cyan-400 hover:text-cyan-300">
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 py-24 dark:border-zinc-800 dark:bg-zinc-900/50">
+                        <span className="mb-4 text-4xl text-gray-400 dark:text-zinc-600">🎟️</span>
+                        <p className="text-lg font-medium text-gray-600 dark:text-zinc-400">Kamu belum punya riwayat pemesanan tiket.</p>
+                        <Link
+                            href="/"
+                            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-red-700"
+                        >
                             Cari Film Sekarang &rarr;
                         </Link>
                     </div>

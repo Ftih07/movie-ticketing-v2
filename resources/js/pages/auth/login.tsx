@@ -42,7 +42,9 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Email address</Label>
+                        <Label htmlFor="email" className="text-gray-900 dark:text-white">
+                            Email address
+                        </Label>
                         <Input
                             id="email"
                             type="email"
@@ -53,14 +55,22 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
                             placeholder="email@example.com"
+                            className="focus-visible:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
                         />
                         <InputError message={errors.email} />
                     </div>
+
                     <div className="grid gap-2">
                         <div className="flex items-center">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password" className="text-gray-900 dark:text-white">
+                                Password
+                            </Label>
                             {canResetPassword && (
-                                <TextLink href={route('password.request')} className="ml-auto text-sm" tabIndex={5}>
+                                <TextLink
+                                    href={route('password.request')}
+                                    className="ml-auto text-sm text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                                    tabIndex={5}
+                                >
                                     Forgot password?
                                 </TextLink>
                             )}
@@ -74,26 +84,41 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             placeholder="Password"
+                            className="focus-visible:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
                         />
                         <InputError message={errors.password} />
                     </div>
+
                     <div className="flex items-center space-x-3">
-                        <Checkbox id="remember" name="remember" tabIndex={3} />
-                        <Label htmlFor="remember">Remember me</Label>
+                        <Checkbox
+                            id="remember"
+                            name="remember"
+                            tabIndex={3}
+                            className="data-[state=checked]:border-red-600 data-[state=checked]:bg-red-600"
+                        />
+                        <Label htmlFor="remember" className="text-gray-700 dark:text-zinc-300">
+                            Remember me
+                        </Label>
                     </div>
-                    <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
-                        {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+
+                    <Button
+                        type="submit"
+                        className="mt-4 w-full bg-red-600 text-white transition-colors hover:bg-red-700"
+                        tabIndex={4}
+                        disabled={processing}
+                    >
+                        {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                         Log in
                     </Button>
 
-                    {/* --- TAMBAHKAN KODE INI DI BAWAH TOMBOL LOG IN --- */}
+                    {/* --- SOCIAL LOGIN DIVIDER --- */}
                     <div className="mt-6">
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-slate-700" />
+                                <div className="w-full border-t border-gray-200 dark:border-zinc-800" />
                             </div>
                             <div className="relative flex justify-center text-sm leading-6 font-medium">
-                                <span className="bg-slate-900 px-6 text-slate-400">Or continue with</span>
+                                <span className="bg-white px-6 text-gray-500 dark:bg-zinc-950 dark:text-zinc-400">Or continue with</span>
                             </div>
                         </div>
 
@@ -101,7 +126,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             {/* Tombol Google */}
                             <a
                                 href={route('socialite.redirect', 'google')}
-                                className="flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-300 transition-all ring-inset hover:bg-slate-50 focus-visible:ring-transparent"
+                                className="flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 transition-all ring-inset hover:bg-gray-50 focus-visible:ring-transparent dark:bg-zinc-900 dark:text-white dark:ring-zinc-700 dark:hover:bg-zinc-800"
                             >
                                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                                     <path
@@ -138,15 +163,19 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     </div>
                 </div>
 
-                <div className="text-muted-foreground text-center text-sm">
+                <div className="text-center text-sm text-gray-500 dark:text-zinc-400">
                     Don't have an account?{' '}
-                    <TextLink href={route('register')} tabIndex={5}>
+                    <TextLink
+                        href={route('register')}
+                        className="font-semibold text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                        tabIndex={5}
+                    >
                         Sign up
                     </TextLink>
                 </div>
             </form>
 
-            {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
+            {status && <div className="mb-4 text-center text-sm font-medium text-green-600 dark:text-green-400">{status}</div>}
         </AuthLayout>
     );
 }

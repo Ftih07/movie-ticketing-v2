@@ -93,105 +93,119 @@ export default function SeatSelection({ showtime, bookedSeats, midtransClientKey
         <MainLayout>
             <Head title={`Pilih Kursi | ${showtime.movie.title}`} />
 
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                {/* KIRI: AREA PILIH KURSI */}
-                <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl lg:col-span-2">
-                    <h2 className="border-magenta mb-8 border-l-4 pl-3 text-2xl font-bold text-white">Layar Bioskop</h2>
+            <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                    {/* KIRI: AREA PILIH KURSI */}
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8 lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
+                        <div className="mb-8 flex items-center gap-3">
+                            <div className="h-6 w-1.5 rounded-full bg-red-600"></div>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Layar Bioskop</h2>
+                        </div>
 
-                    {/* Visual Layar */}
-                    <div className="neon-border-cyan mb-12 h-8 w-full rounded-t-full border-t-4 border-cyan-400 bg-gradient-to-b from-cyan-500/40 to-transparent opacity-60"></div>
+                        {/* Visual Layar Elegan */}
+                        <div className="relative mb-14 flex justify-center">
+                            <div className="h-10 w-full max-w-lg rounded-t-[50%] border-t-2 border-gray-300 bg-gradient-to-b from-gray-200 to-transparent opacity-80 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.1)] dark:border-zinc-700 dark:from-zinc-800 dark:to-transparent dark:shadow-[0_-10px_20px_-5px_rgba(255,255,255,0.05)]"></div>
+                            <p className="absolute bottom-2 text-xs font-semibold tracking-widest text-gray-400 uppercase dark:text-zinc-500">
+                                Screen
+                            </p>
+                        </div>
 
-                    {/* Grid Kursi */}
-                    <div className="flex flex-col items-center gap-4">
-                        {rows.map((row) => (
-                            <div key={row} className="flex gap-2 sm:gap-4">
-                                {/* Angka Kolom */}
-                                {cols.map((col) => {
-                                    const seatCode = `${row}${col}`;
-                                    const isBooked = bookedSeats.includes(seatCode);
-                                    const isSelected = selectedSeats.includes(seatCode);
+                        {/* Grid Kursi */}
+                        <div className="flex flex-col items-center gap-3 overflow-x-auto pb-4 sm:gap-4">
+                            {rows.map((row) => (
+                                <div key={row} className="flex gap-2 sm:gap-3">
+                                    {/* Angka Kolom */}
+                                    {cols.map((col) => {
+                                        const seatCode = `${row}${col}`;
+                                        const isBooked = bookedSeats.includes(seatCode);
+                                        const isSelected = selectedSeats.includes(seatCode);
 
-                                    return (
-                                        <button
-                                            key={seatCode}
-                                            disabled={isBooked}
-                                            onClick={() => toggleSeat(seatCode)}
-                                            className={`flex h-8 w-8 items-center justify-center rounded-t-lg rounded-b-sm text-xs font-bold transition-all sm:h-10 sm:w-10 ${
-                                                isBooked
-                                                    ? 'cursor-not-allowed bg-slate-700 text-slate-500'
-                                                    : isSelected
-                                                      ? 'bg-magenta neon-border-magenta scale-110 text-white'
-                                                      : 'bg-slate-800 text-slate-400 ring-1 ring-slate-700 hover:bg-cyan-600 hover:text-white'
-                                            } `}
-                                        >
-                                            {seatCode}
-                                        </button>
-                                    );
-                                })}
+                                        return (
+                                            <button
+                                                key={seatCode}
+                                                disabled={isBooked}
+                                                onClick={() => toggleSeat(seatCode)}
+                                                className={`flex h-8 w-8 items-center justify-center rounded-t-lg rounded-b-sm text-[10px] font-bold transition-all duration-200 sm:h-10 sm:w-10 sm:text-xs ${
+                                                    isBooked
+                                                        ? 'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-zinc-800/80 dark:text-zinc-600'
+                                                        : isSelected
+                                                          ? 'scale-110 bg-red-600 text-white shadow-lg shadow-red-600/30'
+                                                          : 'bg-white text-gray-600 ring-1 ring-gray-300 hover:-translate-y-1 hover:text-red-600 hover:ring-red-500 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-700 dark:hover:text-red-500 dark:hover:ring-red-500'
+                                                } `}
+                                            >
+                                                {seatCode}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Keterangan Warna */}
+                        <div className="mt-12 flex flex-wrap justify-center gap-6 text-xs font-medium text-gray-500 sm:gap-8 sm:text-sm dark:text-zinc-400">
+                            <div className="flex items-center gap-2">
+                                <div className="h-5 w-5 rounded-t-md rounded-b-sm bg-white ring-1 ring-gray-300 dark:bg-zinc-950 dark:ring-zinc-700"></div>
+                                <span>Tersedia</span>
                             </div>
-                        ))}
-                    </div>
-
-                    {/* Keterangan Warna */}
-                    <div className="mt-12 flex justify-center gap-8 text-sm text-slate-400">
-                        <div className="flex items-center gap-2">
-                            <div className="h-4 w-4 rounded-sm bg-slate-800 ring-1 ring-slate-700"></div> Tersedia
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="bg-magenta neon-border-magenta h-4 w-4 rounded-sm"></div> Pilihanmu
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="h-4 w-4 rounded-sm bg-slate-700"></div> Terisi
+                            <div className="flex items-center gap-2">
+                                <div className="h-5 w-5 rounded-t-md rounded-b-sm bg-red-600 shadow-sm shadow-red-600/30"></div>
+                                <span>Pilihanmu</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="h-5 w-5 rounded-t-md rounded-b-sm bg-gray-100 dark:bg-zinc-800"></div>
+                                <span>Terisi</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* KANAN: BOOKING SUMMARY */}
-                <div className="sticky top-24 h-fit rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl">
-                    <h3 className="mb-6 text-xl font-bold text-white">Booking Summary</h3>
+                    {/* KANAN: BOOKING SUMMARY */}
+                    <div className="sticky top-24 h-fit rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8 dark:border-zinc-800 dark:bg-zinc-900">
+                        <h3 className="mb-6 text-xl font-bold text-gray-900 dark:text-white">Booking Summary</h3>
 
-                    <div className="mb-6 space-y-4 border-b border-slate-800 pb-6">
-                        <div>
-                            <p className="text-sm text-slate-400">Film</p>
-                            <p className="font-semibold text-white">{showtime.movie.title}</p>
-                        </div>
-                        <div className="flex justify-between">
+                        <div className="mb-6 space-y-5 border-b border-gray-100 pb-6 dark:border-zinc-800">
                             <div>
-                                <p className="text-sm text-slate-400">Studio</p>
-                                <p className="font-semibold text-white">{showtime.studio.name}</p>
+                                <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Film</p>
+                                <p className="text-lg leading-tight font-bold text-gray-900 dark:text-white">{showtime.movie.title}</p>
                             </div>
-                            <div className="text-right">
-                                <p className="text-sm text-slate-400">Waktu</p>
-                                <p className="font-semibold text-cyan-400">{showtime.start_time.substring(0, 5)}</p>
+                            <div className="flex justify-between">
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Studio</p>
+                                    <p className="font-semibold text-gray-900 dark:text-white">{showtime.studio.name}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Waktu</p>
+                                    <p className="font-bold text-red-600">{showtime.start_time.substring(0, 5)} WIB</p>
+                                </div>
+                            </div>
+                            <div className="rounded-lg bg-gray-50 p-4 dark:bg-zinc-950/50">
+                                <p className="mb-1 text-xs font-medium text-gray-500 dark:text-zinc-400">Kursi Terpilih</p>
+                                <p className="font-bold text-gray-900 dark:text-white">
+                                    {selectedSeats.length > 0 ? (
+                                        selectedSeats.join(', ')
+                                    ) : (
+                                        <span className="font-normal text-gray-400 italic">Belum ada kursi yang dipilih</span>
+                                    )}
+                                </p>
                             </div>
                         </div>
-                        <div>
-                            <p className="text-sm text-slate-400">Kursi Terpilih</p>
-                            <p className="font-semibold text-white">{selectedSeats.length > 0 ? selectedSeats.join(', ') : '-'}</p>
+
+                        <div className="mb-8 flex items-end justify-between">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-zinc-400">Total Harga</p>
+                            <p className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+                                Rp {totalPrice.toLocaleString('id-ID')}
+                            </p>
                         </div>
-                    </div>
 
-                    <div className="mb-8 flex items-center justify-between">
-                        <p className="text-slate-400">Total Pembayaran</p>
-                        <p className="text-magenta text-2xl font-extrabold">Rp {totalPrice.toLocaleString('id-ID')}</p>
+                        <button
+                            onClick={handleContinue}
+                            disabled={selectedSeats.length === 0 || isProcessing}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow-xl hover:shadow-red-600/30 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600"
+                        >
+                            {isProcessing ? 'Memproses...' : auth.user ? <>Bayar Sekarang</> : <>Login untuk Lanjut &rarr;</>}
+                        </button>
                     </div>
-
-                    <button
-                        onClick={handleContinue}
-                        disabled={selectedSeats.length === 0 || isProcessing}
-                        className="w-full rounded-xl bg-cyan-600 py-4 font-bold text-white transition-all hover:bg-cyan-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
-                    >
-                        {isProcessing ? 'Memproses...' : auth.user ? 'Bayar Sekarang (Midtrans)' : 'Login untuk Lanjut'}
-                    </button>
                 </div>
             </div>
         </MainLayout>
     );
-}
-
-// Deklarasi Window biar TypeScript ngga bawel soal window.snap
-declare global {
-    interface Window {
-        snap: any;
-    }
 }

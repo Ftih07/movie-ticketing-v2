@@ -28,8 +28,17 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->favicon(asset('favicon.png?v=1'))
+            ->brandName(fn() => new \Illuminate\Support\HtmlString('
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="' . asset('favicon.png?v=1') . '" style="height: 32px; width: auto; object-fit: contain;" />
+                <span style="font-weight: 800; font-size: 1.15rem; letter-spacing: -0.025em; color: white;">
+                    Movie-Ticketing-V2
+                </span>
+            </div>
+        '))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Red,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

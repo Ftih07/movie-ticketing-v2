@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('title', 'Service Unavailable')
+@section('code', '503')
+@section('message', 'Bioskop Sedang Renovasi')
+@section('description', 'Kami sedang meningkatkan fasilitas kenyamanan menontonmu. Silakan kembali beberapa saat lagi.')

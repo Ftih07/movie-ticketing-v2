@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('title', 'Page Not Found')
+@section('code', '404')
+@section('message', 'Film Tidak Ditemukan')
+@section('description', 'Adegan yang kamu cari sepertinya sudah dipotong dari durasi tayang atau memang belum pernah ada.')
