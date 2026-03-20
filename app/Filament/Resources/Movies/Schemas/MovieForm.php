@@ -37,6 +37,27 @@ class MovieForm
                     ->default(null)
                     ->columnSpanFull(),
 
+                Select::make('age')
+                    ->label('Rating Usia')
+                    ->options([
+                        'SU' => 'Semua Umur (SU)',
+                        '13+' => 'Remaja (13+)',
+                        '17+' => 'Dewasa (17+)',
+                        '21+' => 'Dewasa Khusus (21+)',
+                    ])
+                    ->required(),
+
+                TextInput::make('director')
+                    ->label('Sutradara')
+                    ->placeholder('Nama sutradara...'),
+
+                // Row 3: Cast (Pemeran)
+                TextInput::make('cast')
+                    ->label('Pemeran / Cast')
+                    ->placeholder('Contoh: Keanu Reeves, Laurence Fishburne...')
+                    ->helperText('Pisahkan nama pemeran dengan koma.')
+                    ->columnSpanFull(),
+
                 FileUpload::make('poster')
                     ->image()
                     ->directory('movie-posters')

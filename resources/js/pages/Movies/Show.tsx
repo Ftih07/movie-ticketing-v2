@@ -1,34 +1,73 @@
 import MainLayout from '@/layouts/MainLayout';
 import { MovieDetail, Showtime } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+// 1. PASTIKAN Link ADA DI SINI
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface Props {
-    movie: MovieDetail & { trailer_url?: string }; // Tambahin trailer_url di type
+    movie: MovieDetail;
     groupedShowtimes: Record<string, Showtime[]>;
 }
 
-const formatRupiah = (number: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
-};
+export default function Show({ movie, groupedShowtimes = {} }: Props) {
+    // Kasih default {}
+    const { auth, flash } = usePage<any>().props;
 
-// Helper buat ngambil ID Video YouTube dan ubah jadi link Embed
-const getYouTubeEmbedUrl = (url: string | undefined) => {
-    if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=0&rel=0` : null;
-};
+    const formatRupiah = (number: number) => {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+    };
 
-export default function Show({ movie, groupedShowtimes }: Props) {
-    const embedUrl = getYouTubeEmbedUrl(movie.trailer_url);
+    const getYouTubeEmbedUrl = (url: string | undefined) => {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=0&rel=0` : null;
+    };
+
+    const embedUrl = getYouTubeEmbedUrl(movie?.trailer_url);
+
+    useEffect(() => {
+        if (flash?.message) {
+            toast.success(flash.message, {
+                style: {
+                    borderRadius: '10px',
+                    background: '#27272a',
+                    color: '#fff',
+                },
+            });
+        }
+    }, [flash?.message]);
+
+    // --- LOGIC SHARE ---
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareText = `Eh, nonton film "${movie.title}" yuk di MovieFlix!`;
+
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(shareUrl);
+        toast.success('Link berhasil disalin ke clipboard! 📋', {
+            style: { borderRadius: '10px', background: '#27272a', color: '#fff' },
+        });
+    };
+
+    const shareWA = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank');
+    const shareFB = () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+    // ------------------
+
+    const toggleFavorite = () => {
+        if (!movie?.id) return;
+        router.post(route('movies.favorite.toggle', movie.id), {}, { preserveScroll: true });
+    };
+
+    // 2. Safety: Jangan render apapun kalau movie belum ada
+    if (!movie) return <div className="min-h-screen bg-black"></div>;
 
     return (
         <MainLayout>
+            <Toaster position="bottom-right" />
             <Head title={`${movie.title} | Book Tickets`} />
 
-            {/* Movie Detail Header ala Netflix */}
             <section className="relative w-full overflow-hidden bg-black pt-8 pb-12 md:pt-16 lg:pb-20">
-                {/* Background Poster Blur & Darkened */}
                 <div className="absolute inset-0 z-0">
                     <img
                         src={`/storage/${movie.poster}`}
@@ -40,7 +79,6 @@ export default function Show({ movie, groupedShowtimes }: Props) {
 
                 <div className="relative z-10 mx-auto max-w-7xl px-4 lg:px-8">
                     <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-[280px,1fr] lg:gap-12">
-                        {/* Kolom Kiri: Poster */}
                         <div className="mx-auto w-[200px] md:w-full">
                             <img
                                 src={`/storage/${movie.poster}`}
@@ -49,32 +87,131 @@ export default function Show({ movie, groupedShowtimes }: Props) {
                             />
                         </div>
 
-                        {/* Kolom Kanan: Info, Synopsis, & Trailer */}
                         <div className="flex flex-col justify-center pt-4">
-                            <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-                                {movie.title}
-                            </h1>
+                            {/* --- TITLE & ACTIONS SECTION --- */}
+                            <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                                {/* Kolom Judul */}
+                                <h1 className="max-w-2xl text-4xl font-black tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
+                                    {movie.title}
+                                </h1>
+
+                                {/* Kolom Tombol Aksi */}
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {/* Tombol Favorite (Model Kapsul) */}
+                                    {auth?.user && (
+                                        <button
+                                            onClick={toggleFavorite}
+                                            className={`group flex items-center gap-2 rounded-full border px-6 py-2.5 text-sm font-bold transition-all hover:scale-105 active:scale-95 ${
+                                                movie.is_favorited
+                                                    ? 'border-red-600 bg-red-600 text-white shadow-lg shadow-red-600/40'
+                                                    : 'border-gray-200 bg-white text-gray-700 hover:border-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'
+                                            }`}
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className={`h-5 w-5 transition-colors ${movie.is_favorited ? 'fill-white' : 'group-hover:text-red-500'}`}
+                                                fill={movie.is_favorited ? 'currentColor' : 'none'}
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2.5}
+                                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                                                />
+                                            </svg>
+                                            <span>{movie.is_favorited ? 'Favorited' : 'Favorite'}</span>
+                                        </button>
+                                    )}
+
+                                    {/* Garis Pemisah (Hanya muncul di layar sm ke atas) */}
+                                    <div className="hidden h-8 w-px bg-gray-200 sm:block dark:bg-zinc-800"></div>
+
+                                    {/* Group Share Buttons */}
+                                    <div className="flex items-center gap-2">
+                                        {/* WhatsApp */}
+                                        <button
+                                            onClick={shareWA}
+                                            title="Share to WhatsApp"
+                                            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md transition-all hover:-translate-y-1 hover:brightness-110 active:scale-90"
+                                        >
+                                            <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.319 1.592 5.548 0 10.061-4.512 10.063-10.062.001-2.69-1.048-5.219-2.953-7.124s-4.435-2.956-7.125-2.957c-5.548 0-10.061 4.512-10.063 10.062 0 2.115.603 3.656 1.605 5.312l-1.011 3.693 3.785-.992zm11.332-6.505c-.247-.124-1.465-.722-1.692-.804-.226-.083-.391-.124-.555.124s-.638.805-.781.969c-.144.165-.289.185-.536.062-.247-.124-1.042-.383-1.986-1.226-.733-.655-1.229-1.464-1.373-1.711-.144-.247-.015-.38.109-.504.111-.112.247-.289.371-.434.124-.144.165-.247.247-.412.082-.165.042-.31-.021-.434s-.555-1.339-.761-1.835c-.2-.486-.403-.42-.555-.427h-.474c-.165 0-.433.062-.659.31-.227.247-.865.845-.865 2.062 0 1.216.886 2.392 1.01 2.557.124.165 1.744 2.663 4.223 3.732.59.255 1.05.407 1.408.521.593.188 1.132.161 1.558.098.476-.07 1.465-.598 1.671-1.176.206-.578.206-1.073.144-1.176-.062-.103-.227-.165-.474-.289z" />
+                                            </svg>
+                                        </button>
+
+                                        {/* Facebook */}
+                                        <button
+                                            onClick={shareFB}
+                                            title="Share to Facebook"
+                                            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1877F2] text-white shadow-md transition-all hover:-translate-y-1 hover:brightness-110 active:scale-90"
+                                        >
+                                            <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                                            </svg>
+                                        </button>
+
+                                        {/* Copy Link */}
+                                        <button
+                                            onClick={handleCopyLink}
+                                            title="Copy Link"
+                                            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-zinc-700 shadow-md ring-1 ring-gray-200 transition-all hover:-translate-y-1 hover:bg-gray-50 active:scale-90 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-700"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="h-5 w-5"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
                             <div className="mb-8 flex flex-wrap items-center gap-3">
-                                <span className="font-semibold text-red-600 dark:text-red-500">{movie.duration} Minutes</span>
+                                <span className="rounded-md border border-red-600 px-2 py-0.5 text-xs font-black text-red-600 uppercase dark:border-red-500 dark:text-red-500">
+                                    {movie.age || 'SU'}
+                                </span>
+                                <span className="text-gray-300 dark:text-zinc-600">|</span>
+                                <span className="font-semibold text-gray-700 dark:text-zinc-300">{movie.duration} Minutes</span>
                                 <span className="text-gray-300 dark:text-zinc-600">|</span>
                                 {movie.categories?.map((cat) => (
                                     <span
                                         key={cat.id}
-                                        className="rounded bg-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-zinc-800 dark:text-zinc-300"
+                                        className="rounded bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-zinc-800 dark:text-zinc-300"
                                     >
                                         {cat.name}
                                     </span>
                                 ))}
                             </div>
 
-                            {/* Block Sinopsis */}
+                            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-zinc-800/50 dark:bg-zinc-900/30">
+                                    <h4 className="text-xs font-bold tracking-widest text-gray-400 uppercase dark:text-zinc-500">Director</h4>
+                                    <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{movie.director || 'N/A'}</p>
+                                </div>
+                                <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-zinc-800/50 dark:bg-zinc-900/30">
+                                    <h4 className="text-xs font-bold tracking-widest text-gray-400 uppercase dark:text-zinc-500">Cast</h4>
+                                    <p className="mt-1 line-clamp-1 text-sm font-semibold text-gray-900 dark:text-white" title={movie.cast}>
+                                        {movie.cast || 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+
                             <div className="mb-8 rounded-xl border border-gray-200 bg-white/50 p-6 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/50">
                                 <h3 className="mb-3 text-lg font-bold text-gray-900 dark:text-white">Synopsis</h3>
                                 <p className="text-sm leading-relaxed text-gray-700 md:text-base dark:text-zinc-300">{movie.description}</p>
                             </div>
 
-                            {/* Block Trailer (MUNCUL KALAU ADA TRAILER_URL) */}
                             {embedUrl && (
                                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-black shadow-lg dark:border-zinc-800">
                                     <div className="aspect-video w-full">
@@ -93,14 +230,15 @@ export default function Show({ movie, groupedShowtimes }: Props) {
                 </div>
             </section>
 
-            {/* Jadwal Tayang Section */}
+            {/* JADWAL TAYANG SECTION */}
             <section className="mx-auto max-w-7xl px-4 py-12 lg:px-8">
                 <div className="mb-10 flex items-center gap-4">
                     <div className="h-8 w-1.5 rounded-full bg-red-600"></div>
                     <h2 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl dark:text-white">Pilih Jadwal & Studio</h2>
                 </div>
 
-                {Object.keys(groupedShowtimes).length > 0 ? (
+                {/* Gunakan pengaman groupedShowtimes && ... */}
+                {groupedShowtimes && Object.keys(groupedShowtimes).length > 0 ? (
                     <div className="flex flex-col gap-10">
                         {Object.entries(groupedShowtimes).map(([date, showtimes]) => (
                             <div
@@ -111,7 +249,6 @@ export default function Show({ movie, groupedShowtimes }: Props) {
                                     📅{' '}
                                     {new Date(date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                 </h3>
-
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                     {showtimes.map((showtime) => (
                                         <div
@@ -128,17 +265,15 @@ export default function Show({ movie, groupedShowtimes }: Props) {
                                                     </div>
                                                     <p className="text-sm font-bold text-red-600 dark:text-red-500">{formatRupiah(showtime.price)}</p>
                                                 </div>
-
                                                 <div className="mb-6 flex items-end justify-between">
                                                     <p className="text-3xl font-black tracking-tighter text-gray-900 dark:text-white">
-                                                        {showtime.start_time.substring(0, 5)}
+                                                        {showtime.start_time?.substring(0, 5)}
                                                     </p>
                                                     <p className="text-xs font-medium text-gray-500 dark:text-zinc-500">
-                                                        s/d {showtime.end_time.substring(0, 5)}
+                                                        s/d {showtime.end_time?.substring(0, 5)}
                                                     </p>
                                                 </div>
                                             </div>
-
                                             <Link
                                                 href={`/booking/${showtime.id}`}
                                                 className="block w-full rounded-lg bg-red-600 py-2.5 text-center text-sm font-bold text-white transition-colors hover:bg-red-700"

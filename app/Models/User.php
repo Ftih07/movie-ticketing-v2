@@ -57,6 +57,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->hasMany(Booking::class);
     }
 
+    public function favorites()
+    {
+        return $this->belongsToMany(Movie::class, 'favorites')->withTimestamps();
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         // Cuma user dengan role 'admin' yang boleh masuk!

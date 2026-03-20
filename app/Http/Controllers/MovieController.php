@@ -24,7 +24,7 @@ class MovieController extends Controller
         $movies = $query->latest()->paginate(12)->withQueryString();
 
         return Inertia::render('Movies/Index', [
-            'movies' => $movies, 
+            'movies' => $movies,
             'selectedDate' => $request->date,
         ]);
     }
@@ -38,11 +38,24 @@ class MovieController extends Controller
             // Ambil jadwal tayang kedepan, urutkan tanggal & jam mulai, sekalian studionya
             'showtimes' => function ($query) {
                 $query->with('studio')
-                    ->where('show_date', '>=', now())
+                    ->where(function ($q) {
+                        // Logika 1: Ambil yang tanggalnya besok-besok (aman)
+                        $q->where('show_date', '>', now()->toDateString())
+                            // Logika 2: Atau yang tanggalnya hari ini, tapi BELUM SELESAI
+                            ->orWhere(function ($q2) {
+                                $q2->where('show_date', now()->toDateString())
+                                    ->where('end_time', '>', now()->toTimeString());
+                            });
+                    })
                     ->orderBy('show_date')
                     ->orderBy('start_time');
             }
         ]);
+
+        // Cek apakah user login dan apakah film ini ada di list favoritnya
+        $movie->is_favorited = auth()->check()
+            ? auth()->user()->favorites()->where('movie_id', $movie->id)->exists()
+            : false;
 
         // Kelompokkan jadwal tayang berdasarkan TANGGAL biar gampang dirender di React
         $groupedShowtimes = $movie->showtimes->groupBy('show_date');

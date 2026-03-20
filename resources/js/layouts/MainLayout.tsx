@@ -75,6 +75,7 @@ export default function MainLayout({ children }: PropsWithChildren) {
 
     const sidebarNavItems: NavItem[] = [
         { title: 'Profile', url: '/settings/profile' },
+        { title: 'My Favorites', url: '/favorites' }, 
         { title: 'Password', url: '/settings/password' },
         { title: 'Appearance', url: '/settings/appearance' },
     ];

@@ -73,7 +73,11 @@ export interface Movie {
     slug: string;
     duration: number; // menit
     description: string | null;
+    director: string;
+    cast: string;
+    age: string;
     poster: string | null;
+    trailer_url?: string;
     created_at: string;
     categories?: Category[]; // Relasi Many-to-Many
     showtimes?: Showtime[]; // Relasi One-to-Many

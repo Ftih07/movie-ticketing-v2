@@ -16,4 +16,8 @@ class Movie extends Model
     {
         return $this->hasMany(Showtime::class);
     }
+    public function favoritedBy()
+    {
+        return $this->belongsToMany(User::class, 'favorites');
+    }
 }

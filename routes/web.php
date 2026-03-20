@@ -5,6 +5,7 @@ use Inertia\Inertia;
 
 
 use App\Http\Controllers\MovieController;
+use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\WebhookController;
@@ -25,6 +26,13 @@ Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');
 // 3. Detail Film
 Route::get('/movies/{movie:slug}', [MovieController::class, 'show'])->name('movies.show');
 
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Halaman list film favorit
+    Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
+    
+    // Action buat tambah/hapus favorit (Toggle)
+    Route::post('/movies/{movie}/favorite', [FavoriteController::class, 'toggle'])->name('movies.favorite.toggle');
+});
 
 // --- LOGIC BOOKING --- //
 // Halaman milih kursi (bisa diakses publik)
