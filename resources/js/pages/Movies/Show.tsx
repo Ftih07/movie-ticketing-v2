@@ -194,16 +194,27 @@ export default function Show({ movie, groupedShowtimes = {} }: Props) {
                                 ))}
                             </div>
 
-                            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-zinc-800/50 dark:bg-zinc-900/30">
-                                    <h4 className="text-xs font-bold tracking-widest text-gray-400 uppercase dark:text-zinc-500">Director</h4>
-                                    <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{movie.director || 'N/A'}</p>
+                            {/* --- STAFF & PRODUCTION GRID (NEW FIELDS) --- */}
+                            <div className="mb-8 grid grid-cols-2 gap-x-8 gap-y-6 rounded-2xl border border-gray-100 bg-white/50 p-6 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/40">
+                                <div className="space-y-1">
+                                    <h4 className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase dark:text-zinc-500">Director</h4>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{movie.director || '—'}</p>
                                 </div>
-                                <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-zinc-800/50 dark:bg-zinc-900/30">
-                                    <h4 className="text-xs font-bold tracking-widest text-gray-400 uppercase dark:text-zinc-500">Cast</h4>
-                                    <p className="mt-1 line-clamp-1 text-sm font-semibold text-gray-900 dark:text-white" title={movie.cast}>
-                                        {movie.cast || 'N/A'}
-                                    </p>
+                                <div className="space-y-1">
+                                    <h4 className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase dark:text-zinc-500">Writer</h4>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{movie.writer || '—'}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <h4 className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase dark:text-zinc-500">Producer</h4>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{movie.producer || '—'}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <h4 className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase dark:text-zinc-500">Production</h4>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{movie.production_company || '—'}</p>
+                                </div>
+                                <div className="col-span-2 space-y-1 border-t border-gray-100 pt-4 dark:border-zinc-800">
+                                    <h4 className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase dark:text-zinc-500">Cast</h4>
+                                    <p className="text-sm leading-relaxed font-bold text-gray-900 dark:text-white">{movie.cast || '—'}</p>
                                 </div>
                             </div>
 

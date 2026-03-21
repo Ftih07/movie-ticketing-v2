@@ -76,6 +76,9 @@ export interface Movie {
     director: string;
     cast: string;
     age: string;
+    writer: string;
+    producer: string;
+    production_company: string;
     poster: string | null;
     trailer_url?: string;
     created_at: string;

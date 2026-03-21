@@ -58,6 +58,18 @@ class MovieForm
                     ->helperText('Pisahkan nama pemeran dengan koma.')
                     ->columnSpanFull(),
 
+                TextInput::make('writer')
+                    ->label('Penulis')
+                    ->placeholder('Nama penulis film...'),
+
+                TextInput::make('production_company')
+                    ->label('Produksi')
+                    ->placeholder('Perusahaan produksi film...'),
+
+                TextInput::make('producer')
+                    ->label('Produser')
+                    ->placeholder('Nama produser film...'),
+
                 FileUpload::make('poster')
                     ->image()
                     ->directory('movie-posters')
