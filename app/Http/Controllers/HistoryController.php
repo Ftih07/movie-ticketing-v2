@@ -9,7 +9,12 @@ class HistoryController extends Controller
 {
     public function index()
     {
-        $bookings = Booking::with(['showtime.movie', 'showtime.studio', 'tickets'])
+        $bookings = Booking::with([
+            'showtime.movie',
+            'showtime.studio',
+            'tickets',
+            'bookingProducts.product' 
+        ])
             ->where('user_id', auth()->id())
             ->latest()
             ->get();

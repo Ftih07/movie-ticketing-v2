@@ -11,6 +11,8 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\HistoryController;
 
+use App\Http\Controllers\SnackController;
+
 use App\Http\Controllers\Auth\SocialiteController;
 
 // Auth Google - Facebook
@@ -29,19 +31,32 @@ Route::get('/movies/{movie:slug}', [MovieController::class, 'show'])->name('movi
 Route::middleware(['auth', 'verified'])->group(function () {
     // Halaman list film favorit
     Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
-    
+
     // Action buat tambah/hapus favorit (Toggle)
     Route::post('/movies/{movie}/favorite', [FavoriteController::class, 'toggle'])->name('movies.favorite.toggle');
 });
 
 // --- LOGIC BOOKING --- //
-// Halaman milih kursi (bisa diakses publik)
+// 1. Halaman milih kursi (bisa diakses publik)
 Route::get('/booking/{showtime}', [BookingController::class, 'show'])->name('booking.show');
 
-// Proses checkout & generate Midtrans (WAJIB LOGIN)
+// 2. Halaman milih Add-ons F&B (WAJIB LOGIN)
+Route::get('/booking/{showtime}/snacks', [BookingController::class, 'snackSelection'])
+    ->name('booking.snacks')
+    ->middleware('auth');
+
+// 3. Proses checkout & generate Midtrans (WAJIB LOGIN)
 Route::post('/booking/{showtime}/checkout', [BookingController::class, 'checkout'])
     ->name('booking.checkout')
     ->middleware('auth');
+
+// --- LOGIC SNACKS --- // 
+Route::get('/snacks', [SnackController::class, 'index'])->name('snacks.index');
+
+// --- LOGIC BELI SNACK MENYUSUL --- //
+Route::get('/history/{booking}/add-snacks', [BookingController::class, 'addSnackSusulan'])->name('history.add-snacks');
+Route::post('/history/{booking}/checkout-snacks', [BookingController::class, 'checkoutSnackSusulan'])->name('history.checkout-snacks');
+Route::post('/history/{booking}/save-snacks', [BookingController::class, 'saveSnackSusulan'])->name('history.save-snacks');
 
 // Webhook (Tanpa middleware auth, karena yang ngakses server Midtrans)
 Route::post('/midtrans/webhook', [WebhookController::class, 'handle'])->name('midtrans.webhook');

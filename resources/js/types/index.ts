@@ -90,3 +90,18 @@ export interface Movie {
 export interface MovieDetail extends Movie {
     groupedShowtimes: Record<string, Showtime[]>; // Key: Tanggal, Value: Array Jadwal
 }
+
+export interface ProductCategory {
+    id: number;
+    name: string;
+    products?: Product[];
+}
+
+export interface Product {
+    id: number;
+    product_category_id: number;
+    name: string;
+    image: string;
+    price: number;
+    description: string;
+}

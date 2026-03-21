@@ -80,7 +80,7 @@ export default function MainLayout({ children }: PropsWithChildren) {
         { title: 'Appearance', url: '/settings/appearance' },
     ];
 
-    const navLinks = ['Home', 'Movies', 'History'];
+    const navLinks = ['Home', 'Movies', 'History', 'Snacks'];
 
     // Helper untuk cek apakah menu sedang aktif
     const isMenuActive = (item: string) => {

@@ -1,7 +1,6 @@
 import MainLayout from '@/layouts/MainLayout';
 import { Showtime } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 interface Props {
@@ -15,9 +14,14 @@ export default function SeatSelection({ showtime, bookedSeats, midtransClientKey
     const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    // Bikin konfigurasi baris dan kolom kursi (Misal: 5 Baris, 10 Kolom)
-    const rows = ['A', 'B', 'C', 'D', 'E'];
-    const cols = Array.from({ length: 10 }, (_, i) => i + 1);
+    // --- LOGIC KURSI DINAMIS ---
+    const capacity = showtime.studio.capacity;
+    const colsPerRow = 10; // Maksimal kolom per baris biar layoutnya tetep bagus
+    const numRows = Math.ceil(capacity / colsPerRow); // Hitung butuh berapa baris (A, B, C, dst)
+
+    // Generate array ['A', 'B', 'C', ...] sesuai jumlah baris
+    const rows = Array.from({ length: numRows }, (_, i) => String.fromCharCode(65 + i));
+    // ---------------------------
 
     // 1. Cek SessionStorage saat komponen dimuat (Siapa tau user baru balik dari halaman Login)
     useEffect(() => {
@@ -46,45 +50,21 @@ export default function SeatSelection({ showtime, bookedSeats, midtransClientKey
         setSelectedSeats((prev) => (prev.includes(seat) ? prev.filter((s) => s !== seat) : [...prev, seat]));
     };
 
-    // LOGIKA CONTINUE & CHECKOUT
-    const handleContinue = async () => {
+    // LOGIKA CONTINUE (Ke Halaman F&B)
+    const handleContinue = () => {
         if (selectedSeats.length === 0) return alert('Pilih minimal 1 kursi bos!');
 
         // AUTH CHECK: Kalau belum login, simpan kursi sementara & lempar ke login
         if (!auth.user) {
             sessionStorage.setItem(`seats_${showtime.id}`, JSON.stringify(selectedSeats));
-            return router.visit(route('login')); // Nanti abis login otomatis balik kesini berkat intended()
+            return router.visit(route('login'));
         }
 
-        // Kalau udah login, kita proses pembayaran!
-        setIsProcessing(true);
-        try {
-            const response = await axios.post(route('booking.checkout', showtime.id), {
-                seats: selectedSeats,
-            });
-
-            // Panggil pop-up Midtrans pakai snap_token dari backend
-            window.snap.pay(response.data.snap_token, {
-                onSuccess: function (result: any) {
-                    router.visit(route('history.index')); // Lempar ke history
-                },
-                onPending: function (result: any) {
-                    router.visit(route('history.index')); // Lempar ke history
-                },
-                onError: function (result: any) {
-                    router.visit(route('history.index')); // Lempar ke history
-                },
-                onClose: function () {
-                    // User nge-close popup tanpa nyelesain aksi apa-apa
-                    router.visit(route('history.index'));
-                },
-            });
-        } catch (error) {
-            console.error('Gagal checkout', error);
-            alert('Terjadi kesalahan sistem.');
-        } finally {
-            setIsProcessing(false);
-        }
+        // Kalau udah login, lempar ke halaman F&B sambil bawa data kursi via state
+        router.visit(route('booking.snacks', showtime.id), {
+            data: { seats: selectedSeats },
+            preserveState: true,
+        });
     };
 
     const totalPrice = selectedSeats.length * showtime.price;
@@ -112,33 +92,44 @@ export default function SeatSelection({ showtime, bookedSeats, midtransClientKey
 
                         {/* Grid Kursi */}
                         <div className="flex flex-col items-center gap-3 overflow-x-auto pb-4 sm:gap-4">
-                            {rows.map((row) => (
-                                <div key={row} className="flex gap-2 sm:gap-3">
-                                    {/* Angka Kolom */}
-                                    {cols.map((col) => {
-                                        const seatCode = `${row}${col}`;
-                                        const isBooked = bookedSeats.includes(seatCode);
-                                        const isSelected = selectedSeats.includes(seatCode);
+                            {rows.map((row, rowIndex) => {
+                                // Hitung ada berapa kursi di baris ini
+                                const isLastRow = rowIndex === numRows - 1;
+                                const remainder = capacity % colsPerRow;
+                                // Kalau baris terakhir dan ada sisa, pakai sisa. Kalau nggak, full 10.
+                                const colsCount = isLastRow && remainder !== 0 ? remainder : colsPerRow;
 
-                                        return (
-                                            <button
-                                                key={seatCode}
-                                                disabled={isBooked}
-                                                onClick={() => toggleSeat(seatCode)}
-                                                className={`flex h-8 w-8 items-center justify-center rounded-t-lg rounded-b-sm text-[10px] font-bold transition-all duration-200 sm:h-10 sm:w-10 sm:text-xs ${
-                                                    isBooked
-                                                        ? 'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-zinc-800/80 dark:text-zinc-600'
-                                                        : isSelected
-                                                          ? 'scale-110 bg-red-600 text-white shadow-lg shadow-red-600/30'
-                                                          : 'bg-white text-gray-600 ring-1 ring-gray-300 hover:-translate-y-1 hover:text-red-600 hover:ring-red-500 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-700 dark:hover:text-red-500 dark:hover:ring-red-500'
-                                                } `}
-                                            >
-                                                {seatCode}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            ))}
+                                // Generate array [1, 2, 3...]
+                                const cols = Array.from({ length: colsCount }, (_, i) => i + 1);
+
+                                return (
+                                    <div key={row} className="flex gap-2 sm:gap-3">
+                                        {/* Angka Kolom */}
+                                        {cols.map((col) => {
+                                            const seatCode = `${row}${col}`;
+                                            const isBooked = bookedSeats.includes(seatCode);
+                                            const isSelected = selectedSeats.includes(seatCode);
+
+                                            return (
+                                                <button
+                                                    key={seatCode}
+                                                    disabled={isBooked}
+                                                    onClick={() => toggleSeat(seatCode)}
+                                                    className={`flex h-8 w-8 items-center justify-center rounded-t-lg rounded-b-sm text-[10px] font-bold transition-all duration-200 sm:h-10 sm:w-10 sm:text-xs ${
+                                                        isBooked
+                                                            ? 'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-zinc-800/80 dark:text-zinc-600'
+                                                            : isSelected
+                                                              ? 'scale-110 bg-red-600 text-white shadow-lg shadow-red-600/30'
+                                                              : 'bg-white text-gray-600 ring-1 ring-gray-300 hover:-translate-y-1 hover:text-red-600 hover:ring-red-500 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-700 dark:hover:text-red-500 dark:hover:ring-red-500'
+                                                    } `}
+                                                >
+                                                    {seatCode}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })}
                         </div>
 
                         {/* Keterangan Warna */}
@@ -161,7 +152,6 @@ export default function SeatSelection({ showtime, bookedSeats, midtransClientKey
                     {/* KANAN: BOOKING SUMMARY */}
                     <div className="sticky top-24 h-fit rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8 dark:border-zinc-800 dark:bg-zinc-900">
                         <h3 className="mb-6 text-xl font-bold text-gray-900 dark:text-white">Booking Summary</h3>
-
                         <div className="mb-6 space-y-5 border-b border-gray-100 pb-6 dark:border-zinc-800">
                             <div>
                                 <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Film</p>
@@ -188,20 +178,18 @@ export default function SeatSelection({ showtime, bookedSeats, midtransClientKey
                                 </p>
                             </div>
                         </div>
-
                         <div className="mb-8 flex items-end justify-between">
                             <p className="text-sm font-semibold text-gray-600 dark:text-zinc-400">Total Harga</p>
                             <p className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
                                 Rp {totalPrice.toLocaleString('id-ID')}
                             </p>
                         </div>
-
                         <button
                             onClick={handleContinue}
-                            disabled={selectedSeats.length === 0 || isProcessing}
+                            disabled={selectedSeats.length === 0}
                             className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow-xl hover:shadow-red-600/30 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600"
                         >
-                            {isProcessing ? 'Memproses...' : auth.user ? <>Bayar Sekarang</> : <>Login untuk Lanjut &rarr;</>}
+                            {auth.user ? <>Lanjut Pilih Snack &rarr;</> : <>Login untuk Lanjut &rarr;</>}
                         </button>
                     </div>
                 </div>
