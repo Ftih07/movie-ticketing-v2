@@ -9,6 +9,7 @@ const sidebarNavItems: NavItem[] = [
     { title: 'Profile', url: '/settings/profile', icon: null },
     { title: 'Password', url: '/settings/password', icon: null },
     { title: 'Appearance', url: '/settings/appearance', icon: null },
+    { title: 'Loyalty Points', url: '/settings/points', icon: null },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {

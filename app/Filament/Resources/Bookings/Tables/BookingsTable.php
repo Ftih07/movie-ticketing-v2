@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Bookings\Tables;
 
+use App\Models\Booking;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -44,6 +46,16 @@ class BookingsTable
                 //
             ])
             ->recordActions([
+                Action::make('markAsPaid')
+                ->label('Tandai Lunas')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->requiresConfirmation()
+                ->visible(fn (Booking $record) => $record->status === 'pending')
+                ->action(function (Booking $record) {
+                    // Cukup update statusnya aja, Model Booking otomatis manggil applyPointTransactions!
+                    $record->update(['status' => 'paid']);
+                }),
                 EditAction::make(),
             ])
             ->toolbarActions([

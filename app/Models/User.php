@@ -62,6 +62,16 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->belongsToMany(Movie::class, 'favorites')->withTimestamps();
     }
 
+    public function pointTransactions()
+    {
+        return $this->hasMany(PointTransaction::class);
+    }
+
+    public function getActivePointsAttribute()
+    {
+        return $this->point_balance;
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         // Cuma user dengan role 'admin' yang boleh masuk!

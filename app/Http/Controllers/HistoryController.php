@@ -13,7 +13,8 @@ class HistoryController extends Controller
             'showtime.movie',
             'showtime.studio',
             'tickets',
-            'bookingProducts.product' 
+            'bookingProducts.product',
+            'promo' // <-- (NEW) Jangan lupa load relasi promo biar bisa nampilin nama promonya
         ])
             ->where('user_id', auth()->id())
             ->latest()

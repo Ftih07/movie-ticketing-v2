@@ -76,4 +76,20 @@ class ProfileController extends Controller
 
         return redirect('/');
     }
+
+    /**
+     * Display the user's loyalty points and history.
+     */
+    public function points(Request $request): Response
+    {
+        $user = $request->user();
+
+        // Ambil riwayat poin, urutkan dari yang terbaru
+        $transactions = $user->pointTransactions()->latest()->get();
+
+        return Inertia::render('settings/points', [
+            'point_balance' => $user->point_balance ?? 0,
+            'transactions' => $transactions,
+        ]);
+    }
 }

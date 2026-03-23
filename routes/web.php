@@ -10,6 +10,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\CheckoutController;
 
 use App\Http\Controllers\SnackController;
 
@@ -49,6 +50,8 @@ Route::get('/booking/{showtime}/snacks', [BookingController::class, 'snackSelect
 Route::post('/booking/{showtime}/checkout', [BookingController::class, 'checkout'])
     ->name('booking.checkout')
     ->middleware('auth');
+
+Route::post('/booking/{showtime}/calculate', [BookingController::class, 'calculateCheckout'])->name('booking.calculate');
 
 // --- LOGIC SNACKS --- // 
 Route::get('/snacks', [SnackController::class, 'index'])->name('snacks.index');

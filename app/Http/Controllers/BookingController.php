@@ -10,7 +10,8 @@ use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
-use Carbon\Carbon; // Pastikan import Carbon
+use Carbon\Carbon;
+use App\Services\PromoService;
 
 class BookingController extends Controller
 {
@@ -18,10 +19,8 @@ class BookingController extends Controller
     public function show(Showtime $showtime)
     {
         // --- VALIDASI WAKTU TAYANG ---
-        // Gabungkan tanggal dan jam selesai film
         $endTime = Carbon::parse($showtime->show_date . ' ' . $showtime->end_time);
 
-        // Kalau sekarang sudah melewati end_time, tendang balik ke page movies
         if (now()->greaterThan($endTime)) {
             return redirect()->route('movies.index')
                 ->with('error', 'Maaf, jadwal tayang film ini sudah berakhir.');
@@ -41,99 +40,154 @@ class BookingController extends Controller
         ]);
     }
 
-    // 2. Nampilin UI Milih Snack (NEW)
+    // 2. Nampilin UI Milih Snack
     public function snackSelection(Request $request, Showtime $showtime)
     {
-        // Validasi waktu tayang sama kayak di show()
         $endTime = Carbon::parse($showtime->show_date . ' ' . $showtime->end_time);
         if (now()->greaterThan($endTime)) {
             return redirect()->route('movies.index')
                 ->with('error', 'Maaf, jadwal tayang film ini sudah berakhir.');
         }
 
-        // Ambil data kursi yang dilempar dari frontend (Inertia)
         $selectedSeats = $request->input('seats', []);
 
-        // Kalau user iseng nembak URL ini tapi blm milih kursi, tendang balik
         if (empty($selectedSeats)) {
             return redirect()->route('booking.show', $showtime->id)
                 ->with('error', 'Pilih kursi terlebih dahulu.');
         }
 
         $showtime->load(['movie', 'studio']);
-        // Ambil kategori dan produk buat ditampilkan di UI
         $categories = ProductCategory::with('products')->get();
+
+        // (NEW) Ambil daftar promo yang lagi aktif buat ditampilin di modal
+        $activePromos = \App\Models\Promo::where('is_active', true)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->whereNotNull('code') // Cuma ambil promo yang butuh input kode
+            ->where(function ($query) {
+                $query->whereNull('quota')->orWhere('quota', '>', 0);
+            })
+            ->get();
 
         return Inertia::render('Booking/SnackSelection', [
             'showtime' => $showtime,
             'selectedSeats' => $selectedSeats,
             'categories' => $categories,
+            'activePromos' => $activePromos, // (NEW) Lempar ke frontend
             'midtransClientKey' => env('MIDTRANS_CLIENT_KEY')
         ]);
     }
 
-    // 3. Proses Checkout (UPDATED)
-    public function checkout(Request $request, Showtime $showtime)
+    // (NEW) Method untuk preview kalkulasi harga real-time di frontend
+    public function calculateCheckout(Request $request, Showtime $showtime, PromoService $promoService)
     {
-        $endTime = Carbon::parse($showtime->show_date . ' ' . $showtime->end_time);
-
-        if (now()->greaterThan($endTime)) {
-            return response()->json([
-                'message' => 'Jadwal tayang sudah berakhir. Transaksi tidak dapat dilanjutkan.'
-            ], 422);
-        }
-
-        // Tambahin validasi snacks
         $request->validate([
             'seats' => 'required|array',
             'snacks' => 'nullable|array',
+            'promo_code' => 'nullable|string',
+            'use_points' => 'boolean'
         ]);
 
-        // --- VALIDASI KAPASITAS STUDIO (NEW) ---
+        $user = auth()->user();
+        $seatsTotal = count($request->seats) * $showtime->price;
+
+        $snacksTotal = 0;
+        if ($request->snacks) {
+            foreach ($request->snacks as $snack) {
+                $snacksTotal += ($snack['price'] * $snack['quantity']);
+            }
+        }
+
+        $subtotal = $seatsTotal + $snacksTotal;
+
+        $calcResult = $promoService->calculate(
+            $subtotal,
+            count($request->seats),
+            $request->promo_code,
+            $request->use_points ?? false,
+            $user
+        );
+
+        if (isset($calcResult['error'])) {
+            return response()->json(['message' => $calcResult['error']], 422);
+        }
+
+        return response()->json($calcResult);
+    }
+
+    // 3. Proses Checkout utama
+    public function checkout(Request $request, Showtime $showtime, PromoService $promoService)
+    {
+        $endTime = \Carbon\Carbon::parse($showtime->show_date . ' ' . $showtime->end_time);
+        if (now()->greaterThan($endTime)) {
+            return response()->json(['message' => 'Jadwal tayang sudah berakhir. Transaksi tidak dapat dilanjutkan.'], 422);
+        }
+
+        $request->validate([
+            'seats' => 'required|array',
+            'snacks' => 'nullable|array',
+            'promo_code' => 'nullable|string',
+            'use_points' => 'boolean'
+        ]);
+
+        // --- VALIDASI KAPASITAS STUDIO ---
         $studioCapacity = $showtime->studio->capacity;
         $requestedSeatsCount = count($request->seats);
 
-        // Hitung tiket yang udah laku di jadwal tayang ini
         $bookedTicketsCount = Ticket::whereHas('booking', function ($query) use ($showtime) {
             $query->where('showtime_id', $showtime->id)
                 ->whereIn('status', ['paid', 'pending']);
         })->count();
 
-        // Kalau sisa kursi nggak cukup buat pesanan yang baru
         if (($bookedTicketsCount + $requestedSeatsCount) > $studioCapacity) {
             return response()->json([
                 'message' => 'Maaf, sisa kapasitas studio tidak mencukupi untuk jumlah kursi yang kamu pilih.'
             ], 422);
         }
-        // ----------------------------------------
 
         $user = auth()->user();
 
-        // Hitung total harga TIKET
+        // Hitung Total Harga
         $seatsTotal = count($request->seats) * $showtime->price;
-
-        // Hitung total harga SNACK
         $snacksTotal = 0;
+
         if ($request->snacks) {
             foreach ($request->snacks as $snack) {
-                // Asumsinya dari frontend ngirim array: [{id: 1, quantity: 2, price: 50000}]
                 $snacksTotal += ($snack['price'] * $snack['quantity']);
             }
         }
 
-        // GABUNGKAN TOTAL
-        $totalAmount = $seatsTotal + $snacksTotal;
+        $subtotal = $seatsTotal + $snacksTotal;
+
+        // --- PANGGIL SERVICE PROMO & POIN ---
+        $calcResult = $promoService->calculate(
+            $subtotal,
+            count($request->seats),
+            $request->promo_code,
+            $request->use_points ?? false,
+            $user
+        );
+
+        if (isset($calcResult['error'])) {
+            return response()->json(['message' => $calcResult['error']], 422);
+        }
+
         $bookingCode = 'MVX-' . date('Ymd') . '-' . strtoupper(Str::random(5));
 
         $booking = Booking::create([
             'user_id' => $user->id,
             'showtime_id' => $showtime->id,
+            'promo_id' => $calcResult['promo_id'],
             'booking_code' => $bookingCode,
-            'total_amount' => $totalAmount,
+            'subtotal_amount' => $calcResult['subtotal'],
+            'discount_amount' => $calcResult['discount_amount'],
+            'points_used' => $calcResult['points_used'],
+            'points_discount_amount' => $calcResult['points_discount'],
+            'points_earned' => $calcResult['points_earned'],
+            'total_amount' => $calcResult['total_amount'],
             'status' => 'pending',
         ]);
 
-        // Simpan Tiket Kursi
         foreach ($request->seats as $seat) {
             Ticket::create([
                 'booking_id' => $booking->id,
@@ -142,14 +196,13 @@ class BookingController extends Controller
             ]);
         }
 
-        // Simpan Pesanan Snack (Kalau Ada)
         if ($request->snacks) {
             foreach ($request->snacks as $snack) {
                 BookingProduct::create([
                     'booking_id' => $booking->id,
                     'product_id' => $snack['id'],
                     'quantity' => $snack['quantity'],
-                    'price' => $snack['price'], // Harga fix saat dibeli
+                    'price' => $snack['price'],
                     'status' => 'unclaimed',
                 ]);
             }
@@ -161,10 +214,17 @@ class BookingController extends Controller
         \Midtrans\Config::$isSanitized = true;
         \Midtrans\Config::$is3ds = true;
 
+        // BYPASS JIKA TOTAL RP 0
+        if ($calcResult['total_amount'] <= 0) {
+            // Ubah status ke paid, Model Booking otomatis akan menjalankan PromoService->applyPointTransactions() lewat event 'updated'
+            $booking->update(['status' => 'paid']);
+            return response()->json(['redirect' => route('history.index')]);
+        }
+
         $params = [
             'transaction_details' => [
                 'order_id' => $booking->booking_code,
-                'gross_amount' => $booking->total_amount, // Midtrans otomatis baca total baru
+                'gross_amount' => $booking->total_amount,
             ],
             'customer_details' => [
                 'first_name' => $user->name,
@@ -263,6 +323,7 @@ class BookingController extends Controller
         // Opsional: Update Grand Total di tabel Booking biar riwayat pengeluarannya akurat
         $totalSnack = collect($request->snacks)->sum(fn($s) => $s['price'] * $s['quantity']);
         $booking->increment('total_amount', $totalSnack);
+        $booking->increment('subtotal_amount', $totalSnack); // <--- TAMBAHIN BARIS INI
 
         return response()->json(['message' => 'Berhasil ditambahkan']);
     }

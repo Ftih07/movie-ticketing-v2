@@ -1,26 +1,42 @@
+import PromoModal from '@/components/PromoModal';
 import MainLayout from '@/layouts/MainLayout';
 import { Product, ProductCategory, Showtime } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface Props {
     showtime: Showtime & { movie: any; studio: any };
     selectedSeats: string[];
     categories: ProductCategory[];
+    activePromos: any[]; // <--- Tambahkan ini
     midtransClientKey: string;
 }
 
-// Interface buat keranjang F&B
 interface CartItem {
     product: Product;
     quantity: number;
 }
 
-export default function SnackSelection({ showtime, selectedSeats, categories, midtransClientKey }: Props) {
+export default function SnackSelection({ showtime, selectedSeats, categories, activePromos, midtransClientKey }: Props) {
     const { auth } = usePage().props;
     const [cart, setCart] = useState<CartItem[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
+
+    // --- STATE BARU UNTUK PROMO & POIN ---
+    const [promoCode, setPromoCode] = useState('');
+    const [usePoints, setUsePoints] = useState(false);
+    const [calcError, setCalcError] = useState('');
+    const [isPromoModalOpen, setIsPromoModalOpen] = useState(false); // <--- Tambahkan ini
+
+    // State untuk nyimpen hasil kalkulasi dari backend
+    const [calculation, setCalculation] = useState({
+        subtotal: 0,
+        discount_amount: 0,
+        points_discount: 0,
+        total_amount: 0,
+        points_earned: 0,
+    });
 
     // 1. Inject Script Midtrans Snap ke Body
     useEffect(() => {
@@ -65,27 +81,72 @@ export default function SnackSelection({ showtime, selectedSeats, categories, mi
         return item ? item.quantity : 0;
     };
 
-    // --- KALKULASI TOTAL HARGA ---
+    // --- KALKULASI TOTAL HARGA DASAR ---
     const seatsTotal = selectedSeats.length * showtime.price;
     const snacksTotal = cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
-    const grandTotal = seatsTotal + snacksTotal;
+    const baseSubtotal = seatsTotal + snacksTotal;
+
+    // --- FETCH KALKULASI PROMO/POIN KE BACKEND ---
+    const fetchCalculation = useCallback(async () => {
+        try {
+            const snacksPayload = cart.map((item) => ({
+                id: item.product.id,
+                quantity: item.quantity,
+                price: item.product.price,
+            }));
+
+            const res = await axios.post(route('booking.calculate', showtime.id), {
+                seats: selectedSeats,
+                snacks: snacksPayload.length > 0 ? snacksPayload : null,
+                promo_code: promoCode,
+                use_points: usePoints,
+            });
+
+            setCalculation(res.data);
+            setCalcError('');
+        } catch (error: any) {
+            setCalcError(error.response?.data?.message || 'Gagal menghitung promo');
+            // Reset kalkulasi ke harga dasar kalau error promo
+            setCalculation((prev) => ({
+                ...prev,
+                subtotal: baseSubtotal,
+                total_amount: baseSubtotal - prev.points_discount,
+                discount_amount: 0,
+            }));
+        }
+    }, [cart, selectedSeats, promoCode, usePoints, showtime.id, baseSubtotal]);
+
+    // Trigger hitung ulang tiap kali ada perubahan di keranjang, input promo, atau toggle poin
+    useEffect(() => {
+        // Pake setTimeout biar gak spam request backend pas ngetik kode promo
+        const delay = setTimeout(() => {
+            fetchCalculation();
+        }, 500);
+        return () => clearTimeout(delay);
+    }, [fetchCalculation]);
 
     // --- LOGIKA CHECKOUT & MIDTRANS ---
     const handleCheckout = async () => {
         setIsProcessing(true);
         try {
-            // Format data snack buat dikirim ke backend
             const snacksPayload = cart.map((item) => ({
                 id: item.product.id,
                 quantity: item.quantity,
-                price: item.product.price, // Harga fix saat ini
+                price: item.product.price,
             }));
 
-            // Tembak Axios ke method checkout()
             const response = await axios.post(route('booking.checkout', showtime.id), {
                 seats: selectedSeats,
-                snacks: snacksPayload.length > 0 ? snacksPayload : null, // Kirim null kalau skip snack
+                snacks: snacksPayload.length > 0 ? snacksPayload : null,
+                promo_code: promoCode,
+                use_points: usePoints,
             });
+
+            // Bypass Midtrans kalau tagihannya Rp 0 (gara-gara diskon full)
+            if (response.data.redirect) {
+                router.visit(response.data.redirect);
+                return;
+            }
 
             // Panggil pop-up Midtrans
             window.snap.pay(response.data.snap_token, {
@@ -102,9 +163,9 @@ export default function SnackSelection({ showtime, selectedSeats, categories, mi
                     router.visit(route('history.index'));
                 },
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Gagal checkout', error);
-            alert('Terjadi kesalahan saat memproses pesanan.');
+            alert(error.response?.data?.message || 'Terjadi kesalahan saat memproses pesanan.');
         } finally {
             setIsProcessing(false);
         }
@@ -207,7 +268,7 @@ export default function SnackSelection({ showtime, selectedSeats, categories, mi
                         )}
                     </div>
 
-                    {/* KANAN: BOOKING SUMMARY (GABUNGAN TIKET + SNACK) */}
+                    {/* KANAN: BOOKING SUMMARY (GABUNGAN TIKET + SNACK + PROMO) */}
                     <div className="sticky top-24 h-fit rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8 dark:border-zinc-800 dark:bg-zinc-900">
                         <h3 className="mb-6 text-xl font-bold text-gray-900 dark:text-white">Order Summary</h3>
 
@@ -254,10 +315,91 @@ export default function SnackSelection({ showtime, selectedSeats, categories, mi
                             )}
                         </div>
 
-                        {/* Grand Total */}
-                        <div className="mb-8 flex items-end justify-between">
-                            <p className="text-sm font-bold text-gray-900 dark:text-zinc-300">Grand Total</p>
-                            <p className="text-2xl font-black tracking-tight text-red-600 dark:text-red-500">{formatRupiah(grandTotal)}</p>
+                        {/* --- SEKSI PROMO & POIN --- */}
+                        <div className="mb-6 space-y-4 border-b border-gray-100 pb-6 dark:border-zinc-800">
+                            {/* Input Promo */}
+                            <div>
+                                <label className="mb-1 block text-xs font-semibold text-gray-600 dark:text-zinc-300">Punya Kode Promo?</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={promoCode}
+                                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                                        placeholder="Masukkan Kode"
+                                        className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm uppercase focus:border-red-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                                    />
+                                    {/* Tombol Clear Promo kalau ada isinya */}
+                                    {promoCode && (
+                                        <button
+                                            onClick={() => setPromoCode('')}
+                                            className="rounded-lg border border-gray-300 bg-white px-3 text-sm font-bold text-gray-500 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+                                {calcError && <p className="mt-1 text-xs text-red-500">{calcError}</p>}
+
+                                {/* Tombol Buka Modal Promo (NEW) */}
+                                <button
+                                    onClick={() => setIsPromoModalOpen(true)}
+                                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-red-300 bg-red-50 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/10 dark:text-red-500 dark:hover:bg-red-900/20"
+                                >
+                                    🎫 Lihat Promo Tersedia
+                                </button>
+                            </div>
+
+                            {/* Toggle Points */}
+                            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-zinc-800/50">
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Gunakan Poin</p>
+                                    <p className="text-xs text-gray-500 dark:text-zinc-400">Saldo: {auth?.user?.point_balance || 0} Pts</p>
+                                </div>
+                                <label className="relative inline-flex cursor-pointer items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={usePoints}
+                                        onChange={(e) => setUsePoints(e.target.checked)}
+                                        disabled={!auth?.user?.point_balance}
+                                        className="peer sr-only"
+                                    />
+                                    <div className="peer h-6 w-11 rounded-full bg-gray-300 peer-checked:bg-red-600 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:bg-zinc-700 dark:peer-checked:bg-red-500"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* --- RANGKUMAN BIAYA --- */}
+                        <div className="mb-8 space-y-2">
+                            <div className="flex justify-between text-sm text-gray-600 dark:text-zinc-400">
+                                <span>Subtotal</span>
+                                <span>{formatRupiah(calculation.subtotal || baseSubtotal)}</span>
+                            </div>
+
+                            {calculation.discount_amount > 0 && (
+                                <div className="flex justify-between text-sm font-semibold text-green-600 dark:text-green-500">
+                                    <span>Diskon Promo</span>
+                                    <span>-{formatRupiah(calculation.discount_amount)}</span>
+                                </div>
+                            )}
+
+                            {calculation.points_discount > 0 && (
+                                <div className="flex justify-between text-sm font-semibold text-yellow-600 dark:text-yellow-500">
+                                    <span>Potongan Poin</span>
+                                    <span>-{formatRupiah(calculation.points_discount)}</span>
+                                </div>
+                            )}
+
+                            <div className="mt-4 flex items-end justify-between border-t border-gray-100 pt-4 dark:border-zinc-800">
+                                <p className="text-sm font-bold text-gray-900 dark:text-zinc-300">Total Bayar</p>
+                                <div className="text-right">
+                                    <p className="text-2xl font-black tracking-tight text-red-600 dark:text-red-500">
+                                        {formatRupiah(calculation.total_amount || baseSubtotal)}
+                                    </p>
+                                    {calculation.points_earned > 0 && (
+                                        <p className="text-xs font-semibold text-yellow-500">✨ +{calculation.points_earned} Pts</p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="flex flex-col gap-3">
@@ -282,6 +424,17 @@ export default function SnackSelection({ showtime, selectedSeats, categories, mi
                     </div>
                 </div>
             </div>
+
+            {/* Render Modal Promo di sini */}
+            <PromoModal
+                isOpen={isPromoModalOpen}
+                onClose={() => setIsPromoModalOpen(false)}
+                promos={activePromos}
+                onSelectPromo={(code) => {
+                    setPromoCode(code); // Set inputan promo
+                    setIsPromoModalOpen(false); // Langsung tutup modal otomatis
+                }}
+            />
         </MainLayout>
     );
 }
