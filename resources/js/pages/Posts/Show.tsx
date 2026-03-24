@@ -1,4 +1,5 @@
 import MainLayout from '@/layouts/MainLayout';
+import { PageProps } from '@inertiajs/core';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -29,16 +30,36 @@ interface PostDetail {
     comments: Comment[];
 }
 
+// 2. Bikin Interface buat RelatedPost (Sama persis kayak Post di file Index)
+interface RelatedPost {
+    id: number;
+    title: string;
+    slug: string;
+    excerpt: string;
+    thumbnail: string | null;
+    type: string;
+    read_time: number;
+    published_at: string;
+}
+
+// 3. Masukin RelatedPost[] ke dalam Props
 interface Props {
     post: PostDetail;
-    relatedPosts: any[];
+    relatedPosts: RelatedPost[]; // <--- Ganti any[] di sini
     isLiked: boolean;
     isSaved: boolean;
 }
 
-export default function Show({ post, relatedPosts, isLiked, isSaved }: Props) {
-    const { auth } = usePage().props as any;
+// 4. Buat SharedProps biar auth-nya nggak butuh 'as any'
+interface SharedProps extends PageProps {
+    auth: {
+        user: unknown | null; // unknown lebih aman daripada any
+    };
+}
 
+export default function Show({ post, relatedPosts, isLiked, isSaved }: Props) {
+    const { auth } = usePage<SharedProps>().props;
+    
     // State Komentar Utama
     const [commentText, setCommentText] = useState('');
 
@@ -334,7 +355,7 @@ export default function Show({ post, relatedPosts, isLiked, isSaved }: Props) {
                                                 <p className="mt-2 text-sm leading-relaxed text-gray-700 dark:text-zinc-300">{comment.content}</p>
 
                                                 {/* Tombol Balas (Reply) */}
-                                                {auth?.user && (
+                                                {!!auth?.user && (
                                                     <button
                                                         onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
                                                         className="mt-3 flex items-center gap-1.5 text-xs font-bold text-gray-500 transition-colors hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500"

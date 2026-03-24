@@ -13,10 +13,18 @@ interface Post {
     published_at: string;
 }
 
+// 1. Tambahkan Interface khusus untuk Link Pagination Laravel
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+// 2. Gunakan PaginationLink untuk menggantikan any[]
 interface Props {
     posts: {
         data: Post[];
-        links: any[];
+        links: PaginationLink[]; // <--- UBAH DI SINI
     };
     filters: {
         type: string;

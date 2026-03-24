@@ -3,8 +3,57 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import QRCode from 'react-qr-code';
 
+// 1. KUMPULAN INTERFACE UNTUK MENGGANTIKAN 'any'
+interface Ticket {
+    id: number;
+    seat_code: string;
+    status: string;
+}
+
+interface BookingProduct {
+    id: number;
+    quantity: number;
+    price: number;
+    status: 'claimed' | 'unclaimed' | string;
+    product: {
+        name: string;
+    };
+}
+
+interface Booking {
+    id: number;
+    booking_code: string;
+    status: 'pending' | 'paid' | 'expired' | 'canceled' | string;
+    total_amount: number | string;
+    subtotal_amount: number | string;
+    discount_amount: number | string;
+    points_discount_amount: number | string;
+    points_used: number;
+    points_earned: number;
+    snap_token: string;
+    showtime: {
+        price: number;
+        show_date: string;
+        start_time: string;
+        end_time: string;
+        movie: {
+            title: string;
+            poster: string | null;
+        };
+        studio: {
+            name: string;
+            capacity: number;
+        };
+    };
+    tickets: Ticket[];
+    booking_products?: BookingProduct[];
+    promo?: {
+        name: string;
+    } | null;
+}
+
 interface Props {
-    bookings: any[];
+    bookings: Booking[]; // <--- any[] diganti Booking[]
     midtransClientKey: string;
 }
 
@@ -35,7 +84,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 export default function History({ bookings, midtransClientKey }: Props) {
     useEffect(() => {
         const scriptUrl = 'https://app.sandbox.midtrans.com/snap/snap.js';
-        let scriptTag = document.createElement('script');
+        const scriptTag = document.createElement('script');
         scriptTag.src = scriptUrl;
         scriptTag.setAttribute('data-client-key', midtransClientKey);
         document.body.appendChild(scriptTag);
@@ -69,7 +118,8 @@ export default function History({ bookings, midtransClientKey }: Props) {
     };
 
     // Fungsi Download QR di-UPGRADE nambah info Snack
-    const downloadQR = (booking: any) => {
+    const downloadQR = (booking: Booking) => {
+        // <--- any diganti Booking
         const svg = document.getElementById(`qr-${booking.booking_code}`);
         if (!svg) return;
 
@@ -81,7 +131,7 @@ export default function History({ bookings, midtransClientKey }: Props) {
         img.onload = () => {
             // Tinggi canvas diperbesar kalau ada F&B biar muat
             const hasSnacks = booking.booking_products && booking.booking_products.length > 0;
-            const extraHeight = hasSnacks ? booking.booking_products.length * 20 + 40 : 0;
+            const extraHeight = hasSnacks && booking.booking_products ? booking.booking_products.length * 20 + 40 : 0;
             canvas.width = 400;
             canvas.height = 550 + extraHeight;
 
@@ -148,11 +198,11 @@ export default function History({ bookings, midtransClientKey }: Props) {
 
                 ctx.fillStyle = '#dc2626';
                 ctx.font = '900 16px sans-serif';
-                const seats = booking.tickets.map((t: any) => t.seat_code).join(', ');
+                const seats = booking.tickets.map((t) => t.seat_code).join(', '); // <--- any di (t: any) dihapus
                 ctx.fillText(seats, col2, startY + 20);
 
                 // --- BAGIAN BARU: INFO F&B ---
-                if (hasSnacks) {
+                if (hasSnacks && booking.booking_products) {
                     startY += 50;
 
                     // Garis pembatas
@@ -171,7 +221,8 @@ export default function History({ bookings, midtransClientKey }: Props) {
                     ctx.fillStyle = '#18181b';
                     ctx.font = 'bold 14px sans-serif';
 
-                    booking.booking_products.forEach((bp: any) => {
+                    booking.booking_products.forEach((bp) => {
+                        // <--- any di (bp: any) dihapus
                         // Cek status F&B (opsional, bisa tampilin kalau 'unclaimed')
                         const statusClaim = bp.status === 'claimed' ? '(Sudah Diambil)' : '';
                         ctx.fillText(`${bp.quantity}x ${bp.product.name} ${statusClaim}`, col1, startY);
@@ -192,10 +243,11 @@ export default function History({ bookings, midtransClientKey }: Props) {
     };
 
     // State buat ngatur Modal Detail Tagihan
-    const [selectedBookingForDetail, setSelectedBookingForDetail] = useState<any>(null);
+    const [selectedBookingForDetail, setSelectedBookingForDetail] = useState<Booking | null>(null); // <--- any diganti Booking | null
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-    const openDetailModal = (booking: any) => {
+    const openDetailModal = (booking: Booking) => {
+        // <--- any diganti Booking
         setSelectedBookingForDetail(booking);
         setIsDetailModalOpen(true);
     };
@@ -250,7 +302,7 @@ export default function History({ bookings, midtransClientKey }: Props) {
 
                                                 {booking.status === 'paid' &&
                                                     booking.tickets?.length > 0 &&
-                                                    (booking.tickets.every((t: any) => t.status === 'used') ? (
+                                                    (booking.tickets.every((t) => t.status === 'used') ? ( // <--- any di (t: any) dihapus
                                                         <span className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[10px] font-bold tracking-wider text-gray-500 uppercase dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
                                                             Sudah Dipakai
                                                         </span>
@@ -263,7 +315,6 @@ export default function History({ bookings, midtransClientKey }: Props) {
                                         </div>
 
                                         <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-                                            {/* ... (Detail Tanggal, Waktu, Studio, Kursi SAMA SEPERTI SEBELUMNYA) ... */}
                                             <div>
                                                 <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Tanggal</p>
                                                 <p className="text-sm font-bold text-gray-900 dark:text-zinc-200">{booking.showtime.show_date}</p>
@@ -281,7 +332,7 @@ export default function History({ bookings, midtransClientKey }: Props) {
                                             <div>
                                                 <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Kursi</p>
                                                 <p className="text-sm font-black text-red-600">
-                                                    {booking.tickets.map((t: any) => t.seat_code).join(', ')}
+                                                    {booking.tickets.map((t) => t.seat_code).join(', ')} {/* <--- any di (t: any) dihapus */}
                                                 </p>
                                             </div>
                                         </div>
@@ -293,28 +344,32 @@ export default function History({ bookings, midtransClientKey }: Props) {
                                                     Pesanan F&B
                                                 </p>
                                                 <ul className="space-y-1">
-                                                    {booking.booking_products.map((bp: any) => (
-                                                        <li key={bp.id} className="flex justify-between text-sm">
-                                                            <span className="font-semibold text-gray-700 dark:text-zinc-300">
-                                                                {bp.quantity}x {bp.product.name}
-                                                            </span>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-gray-500 dark:text-zinc-500">
-                                                                    Rp {(bp.price * bp.quantity).toLocaleString('id-ID')}
+                                                    {booking.booking_products.map(
+                                                        (
+                                                            bp, // <--- any di (bp: any) dihapus
+                                                        ) => (
+                                                            <li key={bp.id} className="flex justify-between text-sm">
+                                                                <span className="font-semibold text-gray-700 dark:text-zinc-300">
+                                                                    {bp.quantity}x {bp.product.name}
                                                                 </span>
-                                                                {/* Tanda kecil kalau udah diambil atau belum */}
-                                                                {bp.status === 'claimed' ? (
-                                                                    <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] text-gray-600 dark:bg-zinc-800 dark:text-zinc-400">
-                                                                        Claimed
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-gray-500 dark:text-zinc-500">
+                                                                        Rp {(bp.price * bp.quantity).toLocaleString('id-ID')}
                                                                     </span>
-                                                                ) : (
-                                                                    <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                                                                        Unclaimed
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </li>
-                                                    ))}
+                                                                    {/* Tanda kecil kalau udah diambil atau belum */}
+                                                                    {bp.status === 'claimed' ? (
+                                                                        <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] text-gray-600 dark:bg-zinc-800 dark:text-zinc-400">
+                                                                            Claimed
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                                                                            Unclaimed
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </li>
+                                                        ),
+                                                    )}
                                                 </ul>
                                             </div>
                                         )}
@@ -376,7 +431,6 @@ export default function History({ bookings, midtransClientKey }: Props) {
                                             onClick={() => downloadQR(booking)}
                                             className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                                         >
-                                            {/* (Icon SVG SAMA KAYAK SEBELUMNYA) */}
                                             <svg
                                                 xmlns="http://www.w3.org/2000/svg"
                                                 className="h-4 w-4"
@@ -399,7 +453,7 @@ export default function History({ bookings, midtransClientKey }: Props) {
                         ))}
                     </div>
                 ) : (
-                    // (Bagian Empty State SAMA KAYAK SEBELUMNYA)
+                    // (Bagian Empty State)
                     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 py-24 dark:border-zinc-800 dark:bg-zinc-900/50">
                         <span className="mb-4 text-4xl text-gray-400 dark:text-zinc-600">🎟️</span>
                         <p className="text-lg font-medium text-gray-600 dark:text-zinc-400">Kamu belum punya riwayat pemesanan tiket.</p>
@@ -452,17 +506,21 @@ export default function History({ bookings, midtransClientKey }: Props) {
                                 {/* Baris F&B (Kalau ada) */}
                                 {selectedBookingForDetail.booking_products &&
                                     selectedBookingForDetail.booking_products.length > 0 &&
-                                    selectedBookingForDetail.booking_products.map((bp: any) => (
-                                        <div key={bp.id} className="flex items-start justify-between text-gray-700 dark:text-zinc-300">
-                                            <div>
-                                                <p className="font-semibold text-gray-900 dark:text-white">{bp.product.name}</p>
-                                                <p className="text-xs text-gray-500 dark:text-zinc-500">
-                                                    {bp.quantity}x Rp {Number(bp.price).toLocaleString('id-ID')}
-                                                </p>
+                                    selectedBookingForDetail.booking_products.map(
+                                        (
+                                            bp, // <--- any di (bp: any) dihapus
+                                        ) => (
+                                            <div key={bp.id} className="flex items-start justify-between text-gray-700 dark:text-zinc-300">
+                                                <div>
+                                                    <p className="font-semibold text-gray-900 dark:text-white">{bp.product.name}</p>
+                                                    <p className="text-xs text-gray-500 dark:text-zinc-500">
+                                                        {bp.quantity}x Rp {Number(bp.price).toLocaleString('id-ID')}
+                                                    </p>
+                                                </div>
+                                                <span className="font-semibold">Rp {(bp.quantity * bp.price).toLocaleString('id-ID')}</span>
                                             </div>
-                                            <span className="font-semibold">Rp {(bp.quantity * bp.price).toLocaleString('id-ID')}</span>
-                                        </div>
-                                    ))}
+                                        ),
+                                    )}
                             </div>
 
                             {/* --- 2. SUBTOTAL & DISKON --- */}
@@ -534,8 +592,18 @@ export default function History({ bookings, midtransClientKey }: Props) {
     );
 }
 
+// 2. DEFINE TIPE UNTUK MIDTRANS (MENGGANTIKAN window.snap: any)
+interface SnapOptions {
+    onSuccess?: (result: unknown) => void;
+    onPending?: (result: unknown) => void;
+    onError?: (result: unknown) => void;
+    onClose?: () => void;
+}
+
 declare global {
     interface Window {
-        snap: any;
+        snap: {
+            pay: (token: string, options?: SnapOptions) => void;
+        };
     }
 }

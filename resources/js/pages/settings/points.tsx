@@ -1,8 +1,6 @@
-import { type SharedData } from '@/types';
-import { Head, usePage } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import SettingsLayout from '@/layouts/settings/layout';
 import HeadingSmall from '@/components/heading-small';
-import dayjs from 'dayjs'; // Opsional: buat format tanggal biar rapi, kalau ga ada bisa pakai toLocaleDateString()
 
 interface PointTransaction {
     id: number;
@@ -19,7 +17,6 @@ interface Props {
 }
 
 export default function Points({ point_balance, transactions }: Props) {
-    const { auth } = usePage<SharedData>().props;
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('id-ID', {

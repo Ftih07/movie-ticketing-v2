@@ -94,6 +94,7 @@ export interface Movie {
 // Type khusus buat detail film yang jadwalnya udah dikelompokkan
 export interface MovieDetail extends Movie {
     groupedShowtimes: Record<string, Showtime[]>; // Key: Tanggal, Value: Array Jadwal
+    is_favorited?: boolean; // <--- TAMBAHKAN BARIS INI (Pakai ? biar aman kalau datanya kosong)
 }
 
 export interface ProductCategory {

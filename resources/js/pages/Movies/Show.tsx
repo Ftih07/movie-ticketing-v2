@@ -1,6 +1,6 @@
 import MainLayout from '@/layouts/MainLayout';
 import { MovieDetail, Showtime } from '@/types';
-// 1. PASTIKAN Link ADA DI SINI
+import { PageProps } from '@inertiajs/core'; // <--- 1. Import PageProps bawaan Inertia
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -23,10 +23,20 @@ interface Props {
     relatedPosts: Post[];
 }
 
-export default function Show({ movie, groupedShowtimes, relatedPosts = {} }: Props) {
-    // Kasih default {}
-    const { auth, flash } = usePage<any>().props;
+// 2. Buat SharedProps untuk menggantikan 'any'
+interface SharedProps extends PageProps {
+    auth: {
+        user: unknown | null; // Pakai unknown lebih aman di mata linter daripada any
+    };
+    flash: {
+        message: string | null;
+    };
+}
 
+export default function Show({ movie, groupedShowtimes, relatedPosts = [] }: Props) {
+    // Kasih default {}
+    const { auth, flash } = usePage<SharedProps>().props;
+    
     const formatRupiah = (number: number) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
     };
@@ -111,7 +121,7 @@ export default function Show({ movie, groupedShowtimes, relatedPosts = {} }: Pro
                                 {/* Kolom Tombol Aksi */}
                                 <div className="flex flex-wrap items-center gap-3">
                                     {/* Tombol Favorite (Model Kapsul) */}
-                                    {auth?.user && (
+                                    {!!auth?.user && (
                                         <button
                                             onClick={toggleFavorite}
                                             className={`group flex items-center gap-2 rounded-full border px-6 py-2.5 text-sm font-bold transition-all hover:scale-105 active:scale-95 ${
