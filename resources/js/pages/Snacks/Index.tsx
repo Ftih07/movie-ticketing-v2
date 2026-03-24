@@ -30,36 +30,24 @@ export default function SnackIndex({ categories = [] }: Props) {
             <Head title="Katalog F&B | MovieFlix" />
 
             {/* HERO SECTION ALA MOVIE DETAIL */}
-            <section className="relative w-full overflow-hidden pt-8 pb-12 md:pt-16 lg:pb-20">
-                {/* BACKGROUND */}
-                <div className="absolute inset-0 z-0">
-                    <img
-                        src="https://images.unsplash.com/photo-1585647347483-22b66260dfff?q=80&w=2070&auto=format&fit=crop"
-                        alt="Cinema Background"
-                        className="h-full w-full scale-110 object-cover opacity-20 blur-sm dark:opacity-30 dark:blur-sm"
-                    />
+            <section className="relative flex w-full items-center justify-center overflow-hidden bg-gray-50 py-20 md:py-32 lg:h-[70vh] dark:bg-black">
+                {/* Background Image */}
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat opacity-40 dark:opacity-50"></div>
 
-                    {/* LIGHT MODE OVERLAY */}
-                    <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] dark:hidden"></div>
+                {/* Overlay Gradients */}
+                <div className="absolute inset-0 bg-gradient-to-b from-gray-50/80 via-gray-50/60 to-gray-50 dark:from-black/80 dark:via-black/60 dark:to-zinc-950"></div>
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent dark:from-zinc-950 dark:via-zinc-950/80"></div>
 
-                    {/* DARK MODE OVERLAY */}
-                    <div className="absolute inset-0 hidden bg-black/60 dark:block"></div>
-
-                    {/* GRADIENT (DUA MODE) */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/70 to-transparent dark:from-black dark:via-black/70"></div>
-                </div>
-
-                {/* CONTENT */}
-                <div className="relative z-10 mx-auto max-w-7xl px-4 lg:px-8">
-                    <div className="flex flex-col items-center justify-center pt-8 text-center">
-                        <h1 className="text-4xl font-black tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-                            MovieFlix <span className="text-red-600">Concessions</span>
-                        </h1>
-
-                        <p className="mt-4 max-w-2xl text-lg text-gray-600 dark:text-gray-300">
-                            Lengkapi pengalaman nontonmu dengan pilihan camilan dan minuman terbaik dari kami.
-                        </p>
-                    </div>
+                {/* Konten Text Slogan */}
+                <div className="relative z-10 flex flex-col items-center px-4 text-center">
+                    <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-gray-900 drop-shadow-sm sm:text-5xl md:text-6xl lg:text-7xl dark:text-white">
+                        MovieFlix
+                        <br className="hidden sm:block" />
+                        <span className="text-red-600 drop-shadow-md"> Concessions</span>
+                    </h1>
+                    <p className="mb-8 max-w-2xl text-base text-gray-800 drop-shadow sm:text-lg md:text-xl dark:text-gray-300">
+                        Lengkapi pengalaman nontonmu dengan pilihan camilan dan minuman terbaik dari kami.
+                    </p>
                 </div>
             </section>
 

@@ -76,12 +76,10 @@ export default function MainLayout({ children }: PropsWithChildren) {
     const sidebarNavItems: NavItem[] = [
         { title: 'Profile', url: '/settings/profile' },
         { title: 'My Favorites', url: '/favorites' },
-        { title: 'Password', url: '/settings/password' },
-        { title: 'Appearance', url: '/settings/appearance' },
-        { title: 'Loyalty Points', url: '/settings/points', icon: null },
+        { title: 'My List', url: '/my-reading-list', icon: null },
     ];
 
-    const navLinks = ['Home', 'Movies', 'History', 'Snacks'];
+    const navLinks = ['Home', 'Movies', 'History', 'Snacks', 'Posts'];
 
     // Helper untuk cek apakah menu sedang aktif
     const isMenuActive = (item: string) => {

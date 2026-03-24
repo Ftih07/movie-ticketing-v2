@@ -6,6 +6,7 @@ use App\Models\Movie;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Category;
+use App\Models\Post;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -55,11 +56,18 @@ class HomeController extends Controller
             ->take(12)
             ->get();
 
+        // Tambahkan ini untuk mengambil 4 artikel/promo terbaru
+        $latestPosts = Post::where('status', 'published')
+            ->latest('published_at')
+            ->take(4)
+            ->get();
+
         return Inertia::render('Home', [
             'nowShowing' => $nowShowing,
             'comingSoon' => $comingSoon,
             'allGenres' => Category::select('id', 'name')->get(),
             'filters' => $request->only(['search', 'genre', 'duration', 'date']),
+            'latestPosts' => $latestPosts, // Kirim ke React
         ]);
     }
 }

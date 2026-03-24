@@ -327,7 +327,7 @@ export default function History({ bookings, midtransClientKey }: Props) {
                                             <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">Total Pengeluaran</p>
                                             <div className="flex items-center gap-3">
                                                 <p className="text-xl font-bold text-gray-900 dark:text-white">
-                                                    Rp {booking.total_amount.toLocaleString('id-ID')}
+                                                    Rp {Number(booking.total_amount).toLocaleString('id-ID')}
                                                 </p>
                                                 <button
                                                     onClick={() => openDetailModal(booking)}

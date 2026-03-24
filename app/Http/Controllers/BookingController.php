@@ -251,10 +251,6 @@ class BookingController extends Controller
         // Pastikan tiket miliknya, statusnya LUNAS, dan film belum tayang
         $endTime = \Carbon\Carbon::parse($booking->showtime->show_date . ' ' . $booking->showtime->end_time);
 
-        if ($booking->user_id !== auth()->id() || $booking->status !== 'paid' || now()->greaterThan($endTime)) {
-            return redirect()->route('history.index')->with('error', 'Tidak dapat menambah pesanan untuk tiket ini.');
-        }
-
         $categories = ProductCategory::with('products')->get();
         $booking->load('showtime.movie');
 

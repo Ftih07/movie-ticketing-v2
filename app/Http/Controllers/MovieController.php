@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Movie;
+use App\Models\Post;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -60,10 +61,18 @@ class MovieController extends Controller
         // Kelompokkan jadwal tayang berdasarkan TANGGAL biar gampang dirender di React
         $groupedShowtimes = $movie->showtimes->groupBy('show_date');
 
+        // TAMBAHKAN INI: Cari artikel/promo yang terkait dengan film ini
+        $relatedPosts = Post::where('movie_id', $movie->id) // $movie didapat dari query filmmu di atas
+            ->where('status', 'published')
+            ->latest('published_at')
+            ->take(4) // Ambil maksimal 4 artikel
+            ->get();
+
         // Kirim data ke React (Pages/Movies/Show.tsx)
         return Inertia::render('Movies/Show', [
             'movie' => $movie,
             'groupedShowtimes' => $groupedShowtimes,
+            'relatedPosts' => $relatedPosts, // Kirim ke React
         ]);
     }
 }

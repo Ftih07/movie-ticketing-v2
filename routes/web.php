@@ -10,7 +10,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\HistoryController;
-use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PostController;
 
 use App\Http\Controllers\SnackController;
 
@@ -67,6 +67,17 @@ Route::post('/midtrans/webhook', [WebhookController::class, 'handle'])->name('mi
 // Halaman History (Wajib login)
 Route::get('/history', [HistoryController::class, 'index'])->name('history.index')->middleware('auth');
 // --------------------- //
+
+Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
+Route::get('/posts/{slug}', [PostController::class, 'show'])->name('posts.show');
+
+// Route yang WAJIB LOGIN (Komentar, Like, Save)
+Route::middleware('auth')->group(function () {
+    Route::post('/posts/{post}/comment', [PostController::class, 'comment'])->name('posts.comment');
+    Route::post('/posts/{post}/like', [PostController::class, 'toggleLike'])->name('posts.like');
+    Route::post('/posts/{post}/save', [PostController::class, 'toggleSave'])->name('posts.save');
+    Route::get('/my-reading-list', [PostController::class, 'myList'])->name('posts.my-list');
+});
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', function () {

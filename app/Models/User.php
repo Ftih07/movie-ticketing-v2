@@ -72,6 +72,34 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->point_balance;
     }
 
+    // =======================================================
+    // RELASI UNTUK FITUR POSTS / ARTIKEL
+    // =======================================================
+
+    /**
+     * Mendapatkan semua artikel yang di-like oleh user ini
+     */
+    public function likedPosts()
+    {
+        return $this->belongsToMany(Post::class, 'post_likes')->withPivot('created_at');
+    }
+
+    /**
+     * Mendapatkan semua artikel yang di-save/bookmark oleh user ini
+     */
+    public function savedPosts()
+    {
+        return $this->belongsToMany(Post::class, 'post_saves')->withPivot('created_at');
+    }
+
+    /**
+     * Mendapatkan semua komentar yang pernah ditulis user ini
+     */
+    public function postComments()
+    {
+        return $this->hasMany(PostComment::class);
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         // Cuma user dengan role 'admin' yang boleh masuk!

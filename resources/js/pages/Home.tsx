@@ -3,10 +3,23 @@ import { Movie } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
+// 1. Tambahkan interface Post
+export interface Post {
+    id: number;
+    title: string;
+    slug: string;
+    excerpt: string;
+    thumbnail: string | null;
+    type: string;
+    read_time: number;
+    published_at: string;
+}
+
 interface Props {
     nowShowing: Movie[];
     comingSoon: Movie[];
     allGenres: { id: number; name: string }[];
+    latestPosts: Post[]; // Props untuk artikel
     filters: {
         search?: string;
         genre?: string;
@@ -15,7 +28,7 @@ interface Props {
     };
 }
 
-export default function Home({ nowShowing, comingSoon, allGenres, filters: initialFilters }: Props) {
+export default function Home({ nowShowing, comingSoon, allGenres, latestPosts, filters: initialFilters }: Props) {
     const [filters, setFilters] = useState({
         search: initialFilters?.search || '',
         genre: initialFilters?.genre || '',
@@ -156,6 +169,105 @@ export default function Home({ nowShowing, comingSoon, allGenres, filters: initi
                     </div>
                 )}
             </div>
+
+            {/* 📰 SECTION LATEST NEWS & PROMOS (DESIGN DISESUAIKAN) */}
+            {latestPosts && latestPosts.length > 0 && (
+                <div className="mx-auto max-w-7xl px-4 lg:px-8">
+                    <section className="mt-14 mb-20 border-t border-gray-200 pt-16 dark:border-zinc-800/80">
+                        {/* Header Section */}
+                        <div className="mb-8 flex items-center gap-3">
+                            <div className="h-6 w-1.5 rounded-full bg-red-600"></div>
+                            <h2 className="text-xl font-bold tracking-tight text-gray-900 md:text-2xl dark:text-white">Latest News & Promos</h2>
+                        </div>
+
+                        {/* Grid Artikel */}
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                            {latestPosts.map((post) => (
+                                <Link
+                                    key={post.id}
+                                    href={route('posts.show', post.slug)}
+                                    className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/5 dark:border-zinc-800 dark:bg-zinc-900/80"
+                                >
+                                    {/* Thumbnail (Aspect Video 16:9) dengan Animasi Smooth */}
+                                    <div className="relative aspect-video w-full overflow-hidden bg-gray-100 dark:bg-zinc-800">
+                                        <img
+                                            src={
+                                                post.thumbnail
+                                                    ? `/storage/${post.thumbnail}`
+                                                    : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800&auto=format&fit=crop'
+                                            }
+                                            alt={post.title}
+                                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                        {/* Overlay Gradient Halus saat Hover */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+
+                                        {/* Badge Tipe */}
+                                        <div className="absolute top-3 left-3 rounded-md bg-red-600 px-2.5 py-1 text-[10px] font-black tracking-widest text-white uppercase shadow-lg">
+                                            {post.type}
+                                        </div>
+                                    </div>
+
+                                    {/* Konten Text */}
+                                    <div className="flex flex-1 flex-col p-5">
+                                        <h3 className="line-clamp-2 text-base font-bold text-gray-900 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-500">
+                                            {post.title}
+                                        </h3>
+                                        <p className="mt-2 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">{post.excerpt}</p>
+
+                                        {/* Meta Data (Tanggal & Waktu Baca) */}
+                                        <div className="mt-auto flex items-center justify-between pt-5 text-xs font-semibold text-gray-500 dark:text-zinc-500">
+                                            <span>
+                                                {new Date(post.published_at).toLocaleDateString('id-ID', {
+                                                    day: 'numeric',
+                                                    month: 'short',
+                                                    year: 'numeric',
+                                                })}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    className="h-3.5 w-3.5 text-red-500 opacity-80"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2.5}
+                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                    />
+                                                </svg>
+                                                {post.read_time} min
+                                            </span>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+
+                        {/* Tombol View All Posts (Desain sama persis dengan View All Movies) */}
+                        <div className="mt-10 flex justify-center">
+                            <Link
+                                href={route('posts.index')}
+                                className="group flex items-center gap-2 rounded-full border border-red-200 px-6 py-2.5 text-sm font-bold transition-all hover:border-red-600 hover:text-red-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-red-500"
+                            >
+                                VIEW ALL POSTS
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </Link>
+                        </div>
+                    </section>
+                </div>
+            )}
         </MainLayout>
     );
 }
@@ -195,10 +307,9 @@ function MovieCarousel({ title, movies }: CarouselProps) {
                 ))}
             </div>
 
-            {/* Ganti bagian Pagination Links dengan ini di MovieCarousel */}
             <div className="mt-10 flex justify-center">
                 <Link
-                    href={route('movies.index')} // Arahkan ke halaman All Movies kamu
+                    href={route('movies.index')}
                     className="group flex items-center gap-2 rounded-full border border-red-200 px-6 py-2.5 text-sm font-bold transition-all hover:border-red-600 hover:text-red-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-red-500"
                 >
                     VIEW ALL MOVIES
