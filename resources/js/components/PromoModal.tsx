@@ -1,13 +1,5 @@
 import React from 'react';
-
-interface Promo {
-    id: number;
-    name: string;
-    code: string;
-    description: string;
-    discount_type: string;
-    discount_value: number;
-}
+import { Promo } from '@/types'; // <--- IMPORT DARI TYPES
 
 interface Props {
     isOpen: boolean;
@@ -18,11 +10,6 @@ interface Props {
 
 export default function PromoModal({ isOpen, onClose, onSelectPromo, promos }: Props) {
     if (!isOpen) return null;
-
-    // Fungsi format rupiah buat nampilin diskon
-    const formatRupiah = (number: number) => {
-        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
-    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity">

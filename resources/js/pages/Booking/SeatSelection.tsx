@@ -3,16 +3,30 @@ import { Showtime } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
+import { User } from '@/types';
+import { PageProps } from '@inertiajs/core';
+
+// Bikin SharedProps yang rapi
+export interface SharedProps extends PageProps {
+    auth: {
+        user: User | null;
+    };
+    appUrl: string;
+}
+
+// 1. Definisikan tipe datanya dengan jelas daripada pakai "any"
 interface Props {
-    showtime: Showtime & { movie: any; studio: any };
+    showtime: Showtime & {
+        movie: { title: string };
+        studio: { capacity: number; name: string };
+    };
     bookedSeats: string[];
     midtransClientKey: string;
 }
 
 export default function SeatSelection({ showtime, bookedSeats, midtransClientKey }: Props) {
-    const { auth } = usePage().props;
+    const { auth } = usePage<SharedProps>().props;
     const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-    const [isProcessing, setIsProcessing] = useState(false);
 
     // --- LOGIC KURSI DINAMIS ---
     const capacity = showtime.studio.capacity;
@@ -33,7 +47,7 @@ export default function SeatSelection({ showtime, bookedSeats, midtransClientKey
 
         // 2. Inject Script Midtrans Snap ke Body
         const scriptUrl = 'https://app.sandbox.midtrans.com/snap/snap.js';
-        let scriptTag = document.createElement('script');
+        const scriptTag = document.createElement('script');
         scriptTag.src = scriptUrl;
         scriptTag.setAttribute('data-client-key', midtransClientKey);
         document.body.appendChild(scriptTag);

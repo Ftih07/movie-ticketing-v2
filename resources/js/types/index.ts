@@ -39,6 +39,11 @@ export interface User {
     email: string;
     avatar?: string;
     email_verified_at: string | null;
+    google_id: string | null;
+    role: 'admin' | 'customer' | string;
+    profile_image: string | null;
+    active_points?: number;
+
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
@@ -104,4 +109,20 @@ export interface Product {
     image: string;
     price: number;
     description: string;
+}
+
+export interface Promo {
+    id: number;
+    code: string;
+    name: string;
+    description: string;
+    discount_type: string;
+    discount_value: number;
+    max_discount: number | null; 
+    start_date: string | null;
+    end_date: string | null;
+    quota: number | null;
+    is_active: boolean;
+    created_at?: string;
+    updated_at?: string;
 }

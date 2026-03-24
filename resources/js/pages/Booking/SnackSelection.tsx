@@ -1,15 +1,20 @@
 import PromoModal from '@/components/PromoModal';
 import MainLayout from '@/layouts/MainLayout';
-import { Product, ProductCategory, Showtime } from '@/types';
+import { Product, ProductCategory, Showtime, Promo } from '@/types';
+import { PageProps } from '@inertiajs/core';
 import { Head, router, usePage } from '@inertiajs/react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 
+// 2. Perbaiki Props (hilangkan any pada movie, studio, dan activePromos)
 interface Props {
-    showtime: Showtime & { movie: any; studio: any };
+    showtime: Showtime & {
+        movie: { title: string };
+        studio: { name: string };
+    };
     selectedSeats: string[];
     categories: ProductCategory[];
-    activePromos: any[]; // <--- Tambahkan ini
+    activePromos: Promo[]; // <--- Ubah any[] jadi Promo[]
     midtransClientKey: string;
 }
 
@@ -18,8 +23,33 @@ interface CartItem {
     quantity: number;
 }
 
+// 3. Buat interface untuk Props Inertia biar auth-nya nggak 'any'
+interface SharedProps extends PageProps {
+    auth: {
+        user: {
+            id: number;
+            name: string;
+            point_balance: number; // Dibutuhkan di baris 260
+        } | null;
+    };
+}
+
+// 4. Interface untuk response kalkulasi (opsional tapi bagus buat typing)
+interface CalculationResponse {
+    subtotal: number;
+    discount_amount: number;
+    points_discount: number;
+    total_amount: number;
+    points_earned: number;
+}
+
+// --- ERROR RESPONSE TYPE DARI AXIOS ---
+interface ErrorResponse {
+    message: string;
+}
+
 export default function SnackSelection({ showtime, selectedSeats, categories, activePromos, midtransClientKey }: Props) {
-    const { auth } = usePage().props;
+    const { auth } = usePage<SharedProps>().props;
     const [cart, setCart] = useState<CartItem[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -27,10 +57,10 @@ export default function SnackSelection({ showtime, selectedSeats, categories, ac
     const [promoCode, setPromoCode] = useState('');
     const [usePoints, setUsePoints] = useState(false);
     const [calcError, setCalcError] = useState('');
-    const [isPromoModalOpen, setIsPromoModalOpen] = useState(false); // <--- Tambahkan ini
+    const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
 
     // State untuk nyimpen hasil kalkulasi dari backend
-    const [calculation, setCalculation] = useState({
+    const [calculation, setCalculation] = useState<CalculationResponse>({
         subtotal: 0,
         discount_amount: 0,
         points_discount: 0,
@@ -41,7 +71,7 @@ export default function SnackSelection({ showtime, selectedSeats, categories, ac
     // 1. Inject Script Midtrans Snap ke Body
     useEffect(() => {
         const scriptUrl = 'https://app.sandbox.midtrans.com/snap/snap.js';
-        let scriptTag = document.createElement('script');
+        const scriptTag = document.createElement('script');
         scriptTag.src = scriptUrl;
         scriptTag.setAttribute('data-client-key', midtransClientKey);
         document.body.appendChild(scriptTag);
@@ -95,7 +125,7 @@ export default function SnackSelection({ showtime, selectedSeats, categories, ac
                 price: item.product.price,
             }));
 
-            const res = await axios.post(route('booking.calculate', showtime.id), {
+            const res = await axios.post<CalculationResponse>(route('booking.calculate', showtime.id), {
                 seats: selectedSeats,
                 snacks: snacksPayload.length > 0 ? snacksPayload : null,
                 promo_code: promoCode,
@@ -104,8 +134,11 @@ export default function SnackSelection({ showtime, selectedSeats, categories, ac
 
             setCalculation(res.data);
             setCalcError('');
-        } catch (error: any) {
-            setCalcError(error.response?.data?.message || 'Gagal menghitung promo');
+        } catch (error) {
+            // 5. Hapus :any di sini
+            const axiosError = error as AxiosError<ErrorResponse>; // Casting ke AxiosError biar aman dari Linter
+            setCalcError(axiosError.response?.data?.message || 'Gagal menghitung promo');
+
             // Reset kalkulasi ke harga dasar kalau error promo
             setCalculation((prev) => ({
                 ...prev,
@@ -135,7 +168,8 @@ export default function SnackSelection({ showtime, selectedSeats, categories, ac
                 price: item.product.price,
             }));
 
-            const response = await axios.post(route('booking.checkout', showtime.id), {
+            // Tambahkan interface untuk response checkout
+            const response = await axios.post<{ redirect?: string; snap_token: string }>(route('booking.checkout', showtime.id), {
                 seats: selectedSeats,
                 snacks: snacksPayload.length > 0 ? snacksPayload : null,
                 promo_code: promoCode,
@@ -148,8 +182,9 @@ export default function SnackSelection({ showtime, selectedSeats, categories, ac
                 return;
             }
 
-            // Panggil pop-up Midtrans
-            window.snap.pay(response.data.snap_token, {
+            // Panggil pop-up Midtrans (Kita abaikan tipe window sementara buat Midtrans karena itu external library)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window as any).snap.pay(response.data.snap_token, {
                 onSuccess: function () {
                     router.visit(route('history.index'));
                 },
@@ -163,9 +198,11 @@ export default function SnackSelection({ showtime, selectedSeats, categories, ac
                     router.visit(route('history.index'));
                 },
             });
-        } catch (error: any) {
+        } catch (error) {
+            // 6. Hapus :any di sini
             console.error('Gagal checkout', error);
-            alert(error.response?.data?.message || 'Terjadi kesalahan saat memproses pesanan.');
+            const axiosError = error as AxiosError<ErrorResponse>;
+            alert(axiosError.response?.data?.message || 'Terjadi kesalahan saat memproses pesanan.');
         } finally {
             setIsProcessing(false);
         }
@@ -173,6 +210,7 @@ export default function SnackSelection({ showtime, selectedSeats, categories, ac
 
     return (
         <MainLayout>
+            {/* ... SISA UI KAMU DI BAWAH SINI TIDAK ADA YANG DIUBAH ... */}
             <Head title={`Pilih F&B | ${showtime.movie.title}`} />
 
             <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
@@ -429,8 +467,8 @@ export default function SnackSelection({ showtime, selectedSeats, categories, ac
             <PromoModal
                 isOpen={isPromoModalOpen}
                 onClose={() => setIsPromoModalOpen(false)}
-                promos={activePromos}
-                onSelectPromo={(code) => {
+                promos={activePromos} // <--- CUKUP SEPERTI INI, HAPUS 'as any'
+                onSelectPromo={(code: string) => {
                     setPromoCode(code); // Set inputan promo
                     setIsPromoModalOpen(false); // Langsung tutup modal otomatis
                 }}

@@ -1,6 +1,7 @@
 import MainLayout from '@/layouts/MainLayout';
 import { Movie } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { PageProps } from '@inertiajs/core'; // 👈 Tambahkan baris ini
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 // 1. Tambahkan interface Post
@@ -26,6 +27,11 @@ interface Props {
         duration?: string;
         date?: string;
     };
+}
+
+// Interface untuk props dari Laravel (HandleInertiaRequests)
+interface SharedProps extends PageProps {
+    appUrl: string;
 }
 
 export default function Home({ nowShowing, comingSoon, allGenres, latestPosts, filters: initialFilters }: Props) {
@@ -58,9 +64,44 @@ export default function Home({ nowShowing, comingSoon, allGenres, latestPosts, f
     // Cek kalau hasil filter benar-benar kosong di kedua section
     const isDataEmpty = nowShowing.length === 0 && comingSoon.length === 0;
 
+    // Ambil 'url' dan 'props' global dari Inertia
+    const { url, props } = usePage<SharedProps>();
+    
+    // Gabungkan APP_URL dari Laravel dengan path saat ini
+    // Hasilnya: "https://movieflix.com/movies/spiderman"
+    const currentFullUrl = `${props.appUrl}${url}`;
+    const ogImageUrl = `${props.appUrl}/images/movieflix-og.png`;
     return (
         <MainLayout>
-            <Head title="Home | Unlimited Movies" />
+            <Head>
+                <title>MovieFlix - Nonton & Booking Tiket Bioskop Tanpa Antri</title>
+                <meta
+                    name="description"
+                    content="Temukan film terbaru, jadwal bioskop, dan berita film terupdate di MovieFlix. Booking tiket dengan mudah sekarang juga!"
+                />
+                <meta name="keywords" content="film terbaru, jadwal bioskop, tiket bioskop, review film, movieflix" />
+
+                {/* Open Graph (Untuk Social Media/WhatsApp share) */}
+                <meta property="og:title" content="MovieFlix - The big screen awaits" />
+                <meta property="og:description" content="Experience movies the way they're meant to be seen. Book your seat today." />
+
+                {/* PERBAIKAN 1 & 2: Ubah ke .png dan pakai URL absolut */}
+                <meta property="og:url" content={currentFullUrl} />
+                <meta property="og:image" content={ogImageUrl} />
+                <meta property="og:type" content="website" />
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="MovieFlix - The big screen awaits" />
+                <meta name="twitter:description" content="Experience movies the way they're meant to be seen. Book your seat today." />
+
+                {/* PERBAIKAN 1 & 2: Ubah ke .png dan pakai URL absolut */}
+                <meta name="twitter:image" content={ogImageUrl} />
+
+                {/* PERBAIKAN 3: Preload gambar hero yang tadi ukurannya 1899 x 587 */}
+                {/* (Asumsinya kamu simpan dengan nama hero-bg.webp di folder public/images) */}
+                <link rel="preload" as="image" href="/images/hero-bg.webp" />
+            </Head>
 
             {/* Generic CTA Hero Section */}
             <section className="relative flex w-full items-center justify-center overflow-hidden bg-gray-50 py-20 md:py-32 lg:h-[70vh] dark:bg-black">
@@ -83,7 +124,6 @@ export default function Home({ nowShowing, comingSoon, allGenres, latestPosts, f
                     </p>
                 </div>
             </section>
-
             <div className="mx-auto max-w-7xl px-4 lg:px-8">
                 {/* 🔍 FILTER BAR */}
                 <div className="relative z-20 -mt-6 mb-12 flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-xl md:-mt-10 md:flex-row md:items-end dark:border-zinc-800 dark:bg-zinc-900">
@@ -169,7 +209,6 @@ export default function Home({ nowShowing, comingSoon, allGenres, latestPosts, f
                     </div>
                 )}
             </div>
-
             {/* 📰 SECTION LATEST NEWS & PROMOS (DESIGN DISESUAIKAN) */}
             {latestPosts && latestPosts.length > 0 && (
                 <div className="mx-auto max-w-7xl px-4 lg:px-8">

@@ -1,7 +1,13 @@
 import MainLayout from '@/layouts/MainLayout';
 import { Movie } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react'; // 👈 Tambahkan usePage
+import { PageProps } from '@inertiajs/core'; // 👈 Tambahkan PageProps
 import { useState } from 'react';
+
+// 1. Tambahkan SharedProps (seperti di Home)
+interface SharedProps extends PageProps {
+    appUrl: string;
+}
 
 interface Props {
     movies: Movie[];
@@ -10,6 +16,13 @@ interface Props {
 
 export default function Index({ movies, selectedDate }: Props) {
     const [date, setDate] = useState(selectedDate || '');
+
+    // 2. Panggil usePage dengan tipe SharedProps
+    const { url, props } = usePage<SharedProps>();
+
+    // 3. Buat Clean URL untuk menghindari Duplicate Content SEO
+    const cleanUrl = `${props.appUrl}${url.split('?')[0]}`;
+    const ogImageUrl = `${props.appUrl}/images/movieflix-og.png`;
 
     // Fungsi otomatis generate tanggal 14 hari ke depan
     const generateDates = (days = 14) => {
@@ -41,10 +54,38 @@ export default function Index({ movies, selectedDate }: Props) {
             },
         );
     };
-    
+
     return (
         <MainLayout>
-            <Head title="All Movies | Browse" />
+            <Head>
+                <title>Daftar Film Bioskop Terlengkap | MovieFlix</title>
+                <meta
+                    name="description"
+                    content="Cari dan temukan daftar lengkap film yang sedang tayang dan akan segera tayang di bioskop. Pesan tiket bioskop online dengan mudah di MovieFlix."
+                />
+
+                {/* Canonical URL: Sangat penting untuk halaman ber-filter */}
+                <link rel="canonical" href={cleanUrl} />
+
+                {/* Open Graph */}
+                <meta property="og:title" content="Daftar Film Bioskop Terlengkap | MovieFlix" />
+                <meta
+                    property="og:description"
+                    content="Cari dan temukan daftar lengkap film yang sedang tayang dan akan segera tayang di bioskop."
+                />
+                <meta property="og:url" content={cleanUrl} />
+                <meta property="og:image" content={ogImageUrl} />
+                <meta property="og:type" content="website" />
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="Daftar Film Bioskop Terlengkap | MovieFlix" />
+                <meta
+                    name="twitter:description"
+                    content="Cari dan temukan daftar lengkap film yang sedang tayang dan akan segera tayang di bioskop."
+                />
+                <meta name="twitter:image" content={ogImageUrl} />
+            </Head>
 
             <div className="mx-auto max-w-7xl px-4 pt-8 lg:px-8">
                 {/* Header Halaman */}
