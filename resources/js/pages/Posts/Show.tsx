@@ -55,11 +55,12 @@ interface SharedProps extends PageProps {
     auth: {
         user: unknown | null; // unknown lebih aman daripada any
     };
+    appUrl: string; 
 }
 
 export default function Show({ post, relatedPosts, isLiked, isSaved }: Props) {
-    const { auth } = usePage<SharedProps>().props;
-    
+    const { auth, appUrl } = usePage<SharedProps>().props;
+
     // State Komentar Utama
     const [commentText, setCommentText] = useState('');
 
@@ -140,9 +141,26 @@ export default function Show({ post, relatedPosts, isLiked, isSaved }: Props) {
         );
     };
 
+    const thumbnailUrl = post.thumbnail ? `${appUrl}/storage/${post.thumbnail}` : `${appUrl}/images/default-poster.png`;
+
     return (
         <MainLayout>
-            <Head title={`${post.title} | Movieflix`} />
+            <Head>
+                <meta name="description" content={post.excerpt || undefined} head-key="description" />
+
+                {/* Open Graph (Facebook, WhatsApp) */}
+                <meta property="og:title" content={`${post.title} | MovieFlix`} head-key="og:title" />
+                <meta property="og:description" content={post.excerpt || undefined} head-key="og:description" />
+                <meta property="og:image" content={thumbnailUrl} head-key="og:image" />
+                <meta property="og:url" content={postUrl} head-key="og:url" />
+                <meta property="og:type" content="article" head-key="og:type" />
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" head-key="twitter:card" />
+                <meta name="twitter:title" content={`${post.title} | MovieFlix`} head-key="twitter:title" />
+                <meta name="twitter:description" content={post.excerpt || undefined} head-key="twitter:description" />
+                <meta name="twitter:image" content={thumbnailUrl} head-key="twitter:image" />
+            </Head>
 
             {/* ARTIKEL UTAMA */}
             <article className="mx-auto max-w-4xl px-4 pt-32 pb-12 lg:px-8">

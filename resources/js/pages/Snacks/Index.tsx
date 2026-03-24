@@ -25,9 +25,27 @@ export default function SnackIndex({ categories = [] }: Props) {
         router.visit(route('movies.index')); // Sesuaikan dengan nama route halaman list film kamu
     };
 
+    const pageTitle = "Katalog F&B (Camilan & Minuman)";
+    const pageDesc = "Lengkapi pengalaman nontonmu dengan pilihan camilan dan minuman terbaik dari MovieFlix. Cek menu popcorn, minuman segar, dan paket combo hemat di sini.";
+    const heroImageUrl = "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=2070&auto=format&fit=crop";
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+
     return (
         <MainLayout>
-            <Head title="Katalog F&B | MovieFlix" />
+            <Head>
+                <meta name="description" content={pageDesc} head-key="description" />
+
+                {/* Open Graph (Facebook, WhatsApp) */}
+                <meta property="og:title" content={`${pageTitle} | MovieFlix`} head-key="og:title" />
+                <meta property="og:description" content={pageDesc} head-key="og:description" />
+                <meta property="og:image" content={heroImageUrl} head-key="og:image" />
+                <meta property="og:url" content={currentUrl} head-key="og:url" />
+
+                {/* Twitter Card */}
+                <meta name="twitter:title" content={`${pageTitle} | MovieFlix`} head-key="twitter:title" />
+                <meta name="twitter:description" content={pageDesc} head-key="twitter:description" />
+                <meta name="twitter:image" content={heroImageUrl} head-key="twitter:image" />
+            </Head>
 
             {/* HERO SECTION ALA MOVIE DETAIL */}
             <section className="relative flex w-full items-center justify-center overflow-hidden bg-gray-50 py-20 md:py-32 lg:h-[70vh] dark:bg-black">

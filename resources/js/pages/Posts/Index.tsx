@@ -64,9 +64,29 @@ export default function Index({ posts, filters: initialFilters }: Props) {
         applyFilters(type);
     };
 
+    const pageTitle = "News & Promos";
+    const pageDesc = "Stay updated with the latest movie reviews, insights, and exclusive ticket deals dari MovieFlix. Temukan promo tiket bioskop terupdate di sini!";
+    const heroImageUrl = "https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?q=80&w=2070&auto=format&fit=crop";
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+
     return (
         <MainLayout>
-            <Head title="News & Promos | Movieflix" />
+            <Head>
+                <meta name="description" content={pageDesc} head-key="description" />
+
+                {/* Open Graph (Facebook, WhatsApp) */}
+                <meta property="og:title" content={`${pageTitle} | MovieFlix`} head-key="og:title" />
+                <meta property="og:description" content={pageDesc} head-key="og:description" />
+                <meta property="og:image" content={heroImageUrl} head-key="og:image" />
+                <meta property="og:url" content={currentUrl} head-key="og:url" />
+                <meta property="og:type" content="website" head-key="og:type" />
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" head-key="twitter:card" />
+                <meta name="twitter:title" content={`${pageTitle} | MovieFlix`} head-key="twitter:title" />
+                <meta name="twitter:description" content={pageDesc} head-key="twitter:description" />
+                <meta name="twitter:image" content={heroImageUrl} head-key="twitter:image" />
+            </Head>
 
             {/* Generic CTA Hero Section */}
             <section className="relative flex w-full items-center justify-center overflow-hidden bg-gray-50 py-20 md:py-32 lg:h-[70vh] dark:bg-black">

@@ -1,30 +1,44 @@
 import type { NavItem, PageProps } from '@/types';
-// 1. TAMBAHKAN 'router' PADA IMPORT INERTIA
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { PropsWithChildren, useEffect, useRef, useState } from 'react';
 
-// 2. IMPORT KOMPONEN PAGELOADER
 import PageLoader from '@/components/PageLoader';
 
-export default function MainLayout({ children }: PropsWithChildren) {
-    const { auth } = usePage<PageProps>().props;
+// 1. Tambahkan tipe untuk Props agar bisa nerima 'title' dari halaman child
+interface LayoutProps extends PropsWithChildren {
+    title?: string;
+}
+
+// Bikin ekstensi tipe sementara buat nangkap appUrl (biar TypeScript nggak ngomel)
+interface CustomPageProps extends PageProps {
+    appUrl?: string;
+}
+
+export default function MainLayout({ children, title }: LayoutProps) {
+    // 2. Tangkap appUrl dari Laravel (yang udah kita set di HandleInertiaRequests sebelumnya)
+    const { auth, appUrl } = usePage<CustomPageProps>().props;
     const { url } = usePage();
+
+    // 3. SETTING DEFAULT META TAGS
+    const defaultTitle = 'MovieFlix - Booking Tiket Bioskop Gak Pake Ribet';
+    const defaultDesc =
+        'Platform terbaik untuk pesan tiket bioskop dan camilan tanpa antri. Dapatkan info film terbaru dan promo menarik setiap harinya!';
+    // Coba pakai appUrl dari backend, kalau gagal fallback ke window.location
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : `${appUrl || ''}${url}`;
+    const ogImageUrl = `${appUrl || ''}/images/movieflix-og.png`;
 
     const [open, setOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // 1. Cek localStorage pas komponen pertama kali dirender
     const [isDarkMode, setIsDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             const savedTheme = localStorage.getItem('theme');
-            // Kalau ada simpanan 'light', set false. Kalau nggak ada, default-nya true (Dark Mode)
             return savedTheme === 'light' ? false : true;
         }
         return true;
     });
 
-    // 2. Terapkan class 'dark' ke HTML dan simpan ke localStorage setiap kali tombol diklik
     useEffect(() => {
         if (isDarkMode) {
             document.documentElement.classList.add('dark');
@@ -35,34 +49,20 @@ export default function MainLayout({ children }: PropsWithChildren) {
         }
     }, [isDarkMode]);
 
-    // 3. TAMBAHKAN STATE UNTUK LOADING
     const [isPageLoading, setIsPageLoading] = useState(false);
 
-    // 4. TAMBAHKAN EFFECT UNTUK MENDENGARKAN EVENT ROUTER
     useEffect(() => {
-        // Mulai loading saat router mulai berpindah
         const startListener = router.on('start', () => setIsPageLoading(true));
-
-        // Selesai loading saat router selesai berpindah (sukses/error)
         const finishListener = router.on('finish', () => setIsPageLoading(false));
 
-        // Cleanup listener saat komponen di-unmount
         return () => {
             startListener();
             finishListener();
         };
     }, []);
 
-    // Toggle Dark Mode
-    useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }, [isDarkMode]);
+    // (Duplikat useEffect isDarkMode sudah aku hapuskan di sini biar kode lebih bersih)
 
-    // Close Dropdown Profile kalau klik luar
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -81,23 +81,35 @@ export default function MainLayout({ children }: PropsWithChildren) {
 
     const navLinks = ['Home', 'Movies', 'History', 'Snacks', 'Posts'];
 
-    // Helper untuk cek apakah menu sedang aktif
     const isMenuActive = (item: string) => {
         const itemPath = item === 'Home' ? '/' : `/${item.toLowerCase()}`;
-
-        // Kalau Home, harus sama persis dengan '/'
         if (itemPath === '/') {
             return url === '/';
         }
-
-        // Kalau menu lain (Movies/History), pake startsWith biar kalau masuk ke detail film tetep nyala
         return url.startsWith(itemPath);
     };
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900 transition-colors duration-300 selection:bg-red-600 selection:text-white dark:bg-zinc-950 dark:text-zinc-100">
+            {/* 4. SUNTIKKAN DEFAULT META TAGS KE HEAD */}
             <Head>
+                {/* Title akan dinamis: Kalau halaman child ngirim title, pakai itu. Kalau nggak, pakai default. */}
+                <title>{title ? `${title} | MovieFlix` : defaultTitle}</title>
+                <meta name="description" content={defaultDesc} head-key="description" />
                 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+                {/* Default Open Graph */}
+                <meta property="og:title" content={title ? `${title} | MovieFlix` : defaultTitle} head-key="og:title" />
+                <meta property="og:description" content={defaultDesc} head-key="og:description" />
+                <meta property="og:url" content={currentUrl} head-key="og:url" />
+                <meta property="og:image" content={ogImageUrl} head-key="og:image" />
+                <meta property="og:type" content="website" head-key="og:type" />
+
+                {/* Default Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" head-key="twitter:card" />
+                <meta name="twitter:title" content={title ? `${title} | MovieFlix` : defaultTitle} head-key="twitter:title" />
+                <meta name="twitter:description" content={defaultDesc} head-key="twitter:description" />
+                <meta name="twitter:image" content={ogImageUrl} head-key="twitter:image" />
             </Head>
 
             {/* Header / Navigasi (SAMA SEPERTI SEBELUMNYA) */}

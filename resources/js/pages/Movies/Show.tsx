@@ -35,8 +35,8 @@ interface SharedProps extends PageProps {
 
 export default function Show({ movie, groupedShowtimes, relatedPosts = [] }: Props) {
     // Kasih default {}
-    const { auth, flash } = usePage<SharedProps>().props;
-    
+    const { auth, flash, appUrl } = usePage<SharedProps>().props;
+
     const formatRupiah = (number: number) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
     };
@@ -88,7 +88,24 @@ export default function Show({ movie, groupedShowtimes, relatedPosts = [] }: Pro
     return (
         <MainLayout>
             <Toaster position="bottom-right" />
-            <Head title={`${movie.title} | Book Tickets`} />
+
+            {/* 2. SEO META TAGS SPECIFIC UNTUK MOVIE INI */}
+            <Head>
+                <meta name="description" content={movie.description || undefined} head-key="description" />
+
+                {/* Open Graph (Facebook, WhatsApp) */}
+                <meta property="og:title" content={`${movie.title} | MovieFlix`} head-key="og:title" />
+                <meta property="og:description" content={movie.description || ''} head-key="og:description" />
+                <meta property="og:image" content={`${appUrl}/storage/${movie.poster}`} head-key="og:image" />
+                <meta property="og:url" content={shareUrl} head-key="og:url" />
+                <meta property="og:type" content="video.movie" head-key="og:type" />
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" head-key="twitter:card" />
+                <meta name="twitter:title" content={`${movie.title} | MovieFlix`} head-key="twitter:title" />
+                <meta name="twitter:description" content={movie.description || ''} head-key="twitter:description" />
+                <meta name="twitter:image" content={`${appUrl}/storage/${movie.poster}`} head-key="twitter:image" />
+            </Head>
 
             <section className="relative w-full overflow-hidden bg-black pt-8 pb-12 md:pt-16 lg:pb-20">
                 <div className="absolute inset-0 z-0">
