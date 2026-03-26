@@ -18,7 +18,9 @@ class ShowtimeResource extends Resource
 {
     protected static ?string $model = Showtime::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string | \UnitEnum | null $navigationGroup = 'Cinema Management';
+    protected static  string| \BackedEnum|null  $navigationIcon = 'heroicon-o-clock';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {

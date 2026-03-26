@@ -18,7 +18,9 @@ class TicketResource extends Resource
 {
     protected static ?string $model = Ticket::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string | \UnitEnum | null $navigationGroup = 'Ticketing & Sales';
+    protected static  string| \BackedEnum|null  $navigationIcon = 'heroicon-o-ticket';
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $recordTitleAttribute = 'ticket_code';
 

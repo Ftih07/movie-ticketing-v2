@@ -18,7 +18,9 @@ class StudioResource extends Resource
 {
     protected static ?string $model = Studio::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string | \UnitEnum | null $navigationGroup = 'Cinema Management';
+    protected static  string| \BackedEnum|null  $navigationIcon = 'heroicon-o-video-camera';
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $recordTitleAttribute = 'name';
 

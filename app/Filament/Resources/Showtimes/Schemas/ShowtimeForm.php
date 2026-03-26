@@ -7,6 +7,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
 
 class ShowtimeForm
 {
@@ -14,48 +16,63 @@ class ShowtimeForm
     {
         return $schema
             ->components([
-                Select::make('movie_id')
-                    ->relationship('movie', 'title')
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->columnSpan(1),
+                Grid::make(1)->schema([ // Pakai 1 kolom utama biar ke tengah
 
-                Select::make('studio_id')
-                    ->relationship('studio', 'name')
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->columnSpan(1),
+                    Section::make('Informasi Tayang')->schema([
+                        Select::make('movie_id')
+                            ->label('Pilih Film')
+                            ->relationship('movie', 'title')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->columnSpan(1),
 
-                DatePicker::make('show_date')
-                    ->required()
-                    ->minDate(now()) // BEST PRACTICE 1: Nggak bisa milih tanggal kemarin! Masa iya jual tiket masa lalu?
-                    ->native(false) // Bikin UI kalendernya lebih cakep ala Filament, bukan bawaan browser
-                    ->columnSpanFull(),
+                        Select::make('studio_id')
+                            ->label('Pilih Studio')
+                            ->relationship('studio', 'name')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->columnSpan(1),
+                    ])->columns(2), // Dibagi 2 kiri-kanan untuk Film & Studio
 
-                TimePicker::make('start_time')
-                    ->required()
-                    ->seconds(false) // BEST PRACTICE 2: Ilangin detik. Bioskop cuma butuh Jam & Menit (misal: 14:30)
-                    ->displayFormat('H:i')
-                    ->columnSpan(1),
+                    Section::make('Jadwal & Harga')->schema([
+                        DatePicker::make('show_date')
+                            ->label('Tanggal Tayang')
+                            ->required()
+                            ->minDate(now())
+                            ->native(false)
+                            ->columnSpanFull(),
 
-                TimePicker::make('end_time')
-                    ->required()
-                    ->seconds(false)
-                    ->displayFormat('H:i')
-                    ->after('start_time') // BEST PRACTICE 3: Ini kunciannya! Jam selesai WAJIB setelah jam mulai
-                    ->validationMessages([
-                        'after' => 'Jam selesai nggak boleh lebih awal dari jam mulai, boss!', // Custom pesan error
-                    ])
-                    ->columnSpan(1),
+                        Grid::make(2)->schema([ // Bikin grid lagi khusus buat Jam
+                            TimePicker::make('start_time')
+                                ->label('Jam Mulai')
+                                ->required()
+                                ->seconds(false)
+                                ->displayFormat('H:i')
+                                ->prefixIcon('heroicon-o-clock'), // Tambah icon
 
-                TextInput::make('price')
-                    ->required()
-                    ->numeric()
-                    ->prefix('Rp')
-                    ->step(5000) // BEST PRACTICE 4: Bikin tombol panah naik-turun kelipatan 5.000 (biar ga ada harga 32.145)
-                    ->columnSpanFull(),
+                            TimePicker::make('end_time')
+                                ->label('Jam Selesai')
+                                ->required()
+                                ->seconds(false)
+                                ->displayFormat('H:i')
+                                ->after('start_time')
+                                ->validationMessages([
+                                    'after' => 'Jam selesai nggak boleh mendahului jam mulai!',
+                                ])
+                                ->prefixIcon('heroicon-o-clock'),
+                        ]),
+
+                        TextInput::make('price')
+                            ->label('Harga Tiket (Per Kursi)')
+                            ->required()
+                            ->numeric()
+                            ->prefix('Rp')
+                            ->step(5000)
+                            ->columnSpanFull(),
+                    ]),
+                ])->columnSpan('lg'), // Biar formnya nggak terlalu melebar (centered)
             ]);
     }
 }

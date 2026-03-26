@@ -14,26 +14,55 @@ class TicketsTable
     {
         return $table
             ->columns([
-                TextColumn::make('booking_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('seat_code')
-                    ->searchable(),
                 TextColumn::make('ticket_code')
-                    ->searchable(),
-                TextColumn::make('status')
-                    ->badge(),
-                TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Kode Tiket')
+                    ->searchable()
+                    ->weight('bold')
+                    ->icon('heroicon-o-qr-code')
+                    ->copyable()
+                    ->copyMessage('Kode tiket disalin!'),
+
+                // Menembus relasi: Ticket -> Booking -> User (Ambil namanya)
+                TextColumn::make('booking.booking_code')
+                    ->label('Ref. Booking')
+                    ->searchable()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->description(fn($record) => $record->booking->user->name ?? 'Unknown'), // Teks kecil nama user di bawah kode booking
+
+                // Menembus relasi: Ticket -> Booking -> Showtime -> Movie (Ambil judulnya)
+                TextColumn::make('booking.showtime.movie.title')
+                    ->label('Film & Jadwal')
+                    ->searchable()
+                    ->sortable()
+                    ->description(fn($record) => \Carbon\Carbon::parse($record->booking->showtime->show_date)->format('d M') . ' | ' . \Carbon\Carbon::parse($record->booking->showtime->start_time)->format('H:i')),
+
+                TextColumn::make('seat_code')
+                    ->label('Kursi')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('info')
+                    ->size('lg'), // Bikin badge kursinya agak gede biar gampang dibaca
+
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'valid' => 'success', // Hijau kalau masih bisa dipakai
+                        'used' => 'danger',   // Merah kalau udah dipakai
+                        default => 'gray',
+                    })
+                    ->searchable(),
+
+                TextColumn::make('created_at')
+                    ->label('Dibuat Pada')
+                    ->dateTime('d M Y, H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                // Filter status bisa ditambahkan di sini nanti
             ])
             ->recordActions([
                 EditAction::make(),

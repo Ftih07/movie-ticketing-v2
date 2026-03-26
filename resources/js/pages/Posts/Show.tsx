@@ -27,6 +27,9 @@ interface PostDetail {
     read_count: number;
     published_at: string;
     likes_count: number;
+    author: {
+        name: string;
+    };
     comments: Comment[];
 }
 
@@ -55,7 +58,7 @@ interface SharedProps extends PageProps {
     auth: {
         user: unknown | null; // unknown lebih aman daripada any
     };
-    appUrl: string; 
+    appUrl: string;
 }
 
 export default function Show({ post, relatedPosts, isLiked, isSaved }: Props) {
@@ -172,7 +175,29 @@ export default function Show({ post, relatedPosts, isLiked, isSaved }: Props) {
                     <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl md:text-5xl dark:text-white">
                         {post.title}
                     </h1>
-                    <div className="mt-6 flex items-center justify-center gap-4 text-sm font-medium text-gray-500 dark:text-zinc-400">
+
+                    {/* BAGIAN META INFO (AUTHOR, TANGGAL, VIEW) */}
+                    <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-medium text-gray-500 dark:text-zinc-400">
+                        {/* TAMPILAN AUTHOR */}
+                        <span className="flex items-center gap-1.5 font-bold text-gray-900 dark:text-gray-200">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4 text-red-600"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                />
+                            </svg>
+                            {post.author?.name || 'Admin'}
+                        </span>
+                        <span>•</span>
+
                         <span>
                             {new Date(post.published_at).toLocaleDateString('id-ID', {
                                 day: 'numeric',

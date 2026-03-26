@@ -9,6 +9,9 @@ use Filament\Notifications\Notification;
 
 class ScanTicket extends Page
 {
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-qr-code';
+    protected static ?int $navigationSort = 1;
+
     protected string $view = 'filament.pages.scan-ticket';
 
     public ?array $scanResult = null;

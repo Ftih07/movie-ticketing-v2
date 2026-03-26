@@ -15,19 +15,33 @@ class StudiosTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->searchable(),
+                    ->label('Nama Studio')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold') // Tulisan ditebalkan
+                    ->icon('heroicon-o-video-camera'), // Tambah ikon kamera biar manis
+
                 TextColumn::make('capacity')
+                    ->label('Kapasitas')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->badge() // Dibikin bentuk label/badge
+                    ->color('success') // Kasih warna hijau
+                    ->formatStateUsing(fn(string $state): string => $state . ' Kursi'), // Tambahin tulisan 'Kursi' di tabelnya
+
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Didaftarkan')
+                    ->dateTime('d M Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Terakhir Diupdate')
+                    ->dateTime('d M Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('name', 'asc') // Urutkan otomatis berdasarkan abjad nama studio
             ->filters([
                 //
             ])

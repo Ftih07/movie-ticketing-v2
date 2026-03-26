@@ -6,6 +6,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -27,6 +28,22 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('Cinema Management'),
+
+                NavigationGroup::make()
+                    ->label('Ticketing & Sales'),
+
+                NavigationGroup::make()
+                    ->label('Food & Beverage (F&B)'),
+
+                NavigationGroup::make()
+                    ->label('Marketing & Content'),
+
+                NavigationGroup::make()
+                    ->label('User Management'),
+            ])
             ->login()
             ->favicon(asset('favicon.png?v=1'))
             ->brandName(fn() => new \Illuminate\Support\HtmlString('

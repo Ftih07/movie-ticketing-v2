@@ -19,47 +19,61 @@ class PostsTable
         return $table
             ->columns([
                 ImageColumn::make('thumbnail')
-                    ->label('Image')
+                    ->label('Thumbnail')
                     ->circular()
-                    ->defaultImageUrl(url('/images/placeholder.png')), // Opsional kalau kosong
+                    ->disk('public') // PENTING
+                    ->defaultImageUrl(url('/images/placeholder.png')),
 
                 TextColumn::make('title')
                     ->label('Judul Post')
                     ->searchable()
                     ->sortable()
-                    ->description(fn($record) => $record->type === 'promo' ? 'Promo' : 'Artikel')
-                    ->limit(30),
+                    ->weight('bold')
+                    ->description(fn($record) => $record->type === 'promo' ? '🎟️ Promo' : '📰 Artikel')
+                    ->limit(40),
 
                 TextColumn::make('movie.title')
-                    ->label('Terkait Film')
+                    ->label('Film Terkait')
                     ->searchable()
                     ->badge()
                     ->color('info')
-                    ->toggleable(), // Bisa disembunyikan/ditampilkan user
+                    ->toggleable(isToggledHiddenByDefault: true), // Default sembunyi
 
                 TextColumn::make('status')
+                    ->label('Status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'draft' => 'gray',
-                        'published' => 'success',
-                        'archived' => 'danger',
-                    }),
+                    // Manipulasi teks: Kalau draft tapi ada jadwalnya, ubah tulisannya!
+                    ->formatStateUsing(function ($state, $record) {
+                        if ($state === 'draft' && $record->scheduled_at && $record->scheduled_at > now()) {
+                            return 'Scheduled';
+                        }
+                        return ucfirst($state);
+                    })
+                    // Warnanya disesuaikan
+                    ->color(function (string $state, $record): string {
+                        if ($state === 'draft' && $record->scheduled_at && $record->scheduled_at > now()) {
+                            return 'info'; // Biru kalau lagi dijadwalkan
+                        }
+                        return match ($state) {
+                            'draft' => 'gray',
+                            'published' => 'success',
+                            'archived' => 'danger',
+                            default => 'gray',
+                        };
+                    })
+                    ->description(fn($record) => $record->scheduled_at && $record->status === 'draft' ? $record->scheduled_at->format('d M, H:i') : null),
 
                 IconColumn::make('is_featured')
                     ->label('Featured')
-                    ->boolean(),
-
-                TextColumn::make('read_count')
-                    ->label('Views')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true), // Sembunyi secara default
+                    ->boolean()
+                    ->toggleable(),
 
                 TextColumn::make('published_at')
-                    ->label('Tanggal Publish')
-                    ->dateTime('d M Y')
+                    ->label('Tgl Terbit')
+                    ->dateTime('d M Y, H:i')
                     ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 SelectFilter::make('status')
                     ->options([

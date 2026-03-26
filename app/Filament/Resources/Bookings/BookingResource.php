@@ -18,7 +18,9 @@ class BookingResource extends Resource
 {
     protected static ?string $model = Booking::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string | \UnitEnum | null $navigationGroup = 'Ticketing & Sales';
+    protected static  string| \BackedEnum|null  $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'booking_code';
 

@@ -8,11 +8,8 @@ use Filament\Actions\BulkActionGroup as ActionsBulkActionGroup;
 use Filament\Actions\DeleteBulkAction as ActionsDeleteBulkAction;
 use Filament\Actions\EditAction as ActionsEditAction;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\Action; // Import untuk custom action 'claim'
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Notifications\Notification;
 
@@ -21,13 +18,14 @@ class BookingProductsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->defaultSort('created_at', 'desc') // Biar yang pesen terbaru ada di atas
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('booking.booking_code')
                     ->searchable()
                     ->sortable()
                     ->label('Kode Booking')
                     ->weight('bold')
+                    ->icon('heroicon-o-ticket')
                     ->copyable()
                     ->copyMessage('Kode booking disalin!'),
 
@@ -36,16 +34,24 @@ class BookingProductsTable
                     ->sortable()
                     ->label('Nama Customer'),
 
+                // Tambahan: Munculin foto snack/minumannya
+                ImageColumn::make('product.image')
+                    ->label('Foto')
+                    ->circular()
+                    ->disk('public')
+                    ->defaultImageUrl(url('/images/placeholder-snack.png')), // Opsional kalau fotonya kosong
+
                 TextColumn::make('product.name')
                     ->searchable()
                     ->sortable()
                     ->label('Pesanan F&B')
-                    ->description(fn(BookingProduct $record): string => $record->quantity . 'x Porsi'),
+                    ->weight('bold') // Ditebalkan biar jelas
+                    ->description(fn(BookingProduct $record): string => $record->quantity . ' Porsi | Rp ' . number_format($record->price, 0, ',', '.')), // Gabung qty & harga di bawah nama
 
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
-                        'unclaimed' => 'danger',
+                        'unclaimed' => 'warning', // Ganti kuning aja, kalau merah (danger) biasanya konotasinya "Error/Gagal"
                         'claimed' => 'success',
                         default => 'gray',
                     })
@@ -59,6 +65,7 @@ class BookingProductsTable
                 TextColumn::make('created_at')
                     ->dateTime('d M Y, H:i')
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true) // Sembunyikan by default biar gak kepanjangan
                     ->label('Waktu Pesan'),
             ])
             ->filters([
@@ -67,10 +74,11 @@ class BookingProductsTable
                         'unclaimed' => 'Belum Diambil',
                         'claimed' => 'Sudah Diambil',
                     ])
-                    ->label('Filter Status'),
+                    ->label('Filter Status')
+                    ->native(false),
             ])
             ->recordActions([
-                // Aksi Cepat: Langsung ubah status di tabel jadi 'Claimed'
+                // Custom Action kamu yang keren tadi (Udah aku rapihin dikit)
                 ActionsAction::make('claim')
                     ->label('Tandai Diambil')
                     ->icon('heroicon-o-check-circle')
@@ -79,7 +87,6 @@ class BookingProductsTable
                     ->modalHeading('Konfirmasi Pengambilan')
                     ->modalDescription('Apakah kamu yakin pesanan ini sudah diserahkan ke customer?')
                     ->modalSubmitActionLabel('Ya, Sudah Diserahkan')
-                    // Tombol ini cuma muncul kalau statusnya masih 'unclaimed'
                     ->visible(fn(BookingProduct $record): bool => $record->status === 'unclaimed')
                     ->action(function (BookingProduct $record) {
                         $record->update(['status' => 'claimed']);
@@ -91,7 +98,6 @@ class BookingProductsTable
                             ->send();
                     }),
 
-                // Edit bawaan Filament
                 ActionsEditAction::make(),
             ])
             ->toolbarActions([

@@ -18,7 +18,9 @@ class BookingProductResource extends Resource
 {
     protected static ?string $model = BookingProduct::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string | \UnitEnum | null $navigationGroup = 'Ticketing & Sales';
+    protected static  string| \BackedEnum|null  $navigationIcon = 'heroicon-o-shopping-bag';
+    protected static ?int $navigationSort = 3;
 
     public static function form(Schema $schema): Schema
     {

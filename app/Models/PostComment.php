@@ -17,6 +17,26 @@ class PostComment extends Model
         'is_approved' => 'boolean',
     ];
 
+    // --- TAMBAHKAN MESIN OTOMATIS INI ---
+    protected static function booted()
+    {
+        // 1. Saat admin menggeser toggle di Filament
+        static::updated(function (PostComment $comment) {
+            // Cek apakah 'is_approved' baru saja diubah menjadi FALSE (Off)
+            if ($comment->wasChanged('is_approved') && $comment->is_approved === false) {
+                // Matikan (false-kan) semua komentar balasan di bawahnya secara massal!
+                $comment->replies()->update(['is_approved' => false]);
+            }
+        });
+
+        // 2. Saat admin menghapus (Delete) komentar utama
+        static::deleted(function (PostComment $comment) {
+            // Hapus juga semua komentar balasan di bawahnya biar nggak jadi "sampah" di database
+            $comment->replies()->delete();
+        });
+    }
+    // -----------------------------------
+
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);

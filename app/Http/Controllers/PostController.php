@@ -40,8 +40,17 @@ class PostController extends Controller
         // Muat artikel beserta komentar dan relasi usernya, plus jumlah likes
         $post = Post::with([
             'comments' => function ($query) {
-                // Hanya ambil komentar utama, tapi sekalian *load* balasannya (replies)
-                $query->whereNull('parent_id')->latest()->with(['user', 'replies.user']);
+                // 1. FILTER KOMENTAR UTAMA: Cuma ambil yang is_approved = true
+                $query->whereNull('parent_id')
+                    ->where('is_approved', true)
+                    ->latest()
+                    ->with([
+                        'user',
+                        // 2. FILTER BALASAN: Cuma load balasan yang is_approved = true juga
+                        'replies' => function ($replyQuery) {
+                            $replyQuery->where('is_approved', true)->with('user');
+                        }
+                    ]);
             }
         ])
             ->withCount('likes')
